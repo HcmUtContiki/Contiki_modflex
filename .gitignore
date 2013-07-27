@@ -5,6 +5,8 @@
 *.log
 *.elf
 *.ihex
+*.hex
+*.modflex
 obj_*
 symbols.*
 Makefile.target
@@ -19,3 +21,6 @@ tools/tunslip6
 *.cooja
 *.wismote
 *.native
+.cproject
+.project
+eclipse_build/
