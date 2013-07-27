@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = example-powertrace
+CONTIKI_PROJECT = example-powertrace-multihop
 APPS+=powertrace
 all: $(CONTIKI_PROJECT)
 

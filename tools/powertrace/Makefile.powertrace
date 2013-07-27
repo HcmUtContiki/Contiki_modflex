@@ -10,7 +10,7 @@ powertrace-parse:
 	@echo LOG must be defined to point to the powertrace log file to parse
 endif #LOG
 
-powertrace-plot: powertrace-plot-node powertrace-plot-sniff
+powertrace-plot:
 	@gnuplot $(CONTIKI)/tools/powertrace/plot-power || echo gnupot failed
 
 powertrace-plot-sniff:
@@ -22,7 +22,7 @@ powertrace-plot-node:
 powertrace-show:
 	gv powertrace-power.eps
 	gv powertrace-node-power.eps
-	gv powertrace-sniff-power.eps
+#	gv powertrace-sniff-power.eps
 
 powertrace-all: powertrace-parse powertrace-plot powertrace-show
 

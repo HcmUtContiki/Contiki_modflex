@@ -11,3 +11,11 @@ Makefile.target
 doc/html
 patches-*
 tools/tunslip6
+*.jar
+*.modflex
+*.hex
+*.eps
+*.hex
+*.cooja
+*.wismote
+*.native
