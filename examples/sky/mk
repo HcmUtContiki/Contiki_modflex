@@ -1,0 +1,1 @@
+msp430-objcopy radio-test.modflex -O ihex radio-test.hex

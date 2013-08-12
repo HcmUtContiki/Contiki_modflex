@@ -45,6 +45,7 @@
 #include "sys/timetable.h"
 #include <string.h>
 
+//#include "dev/leds.h"
 #ifndef CC2520_CONF_AUTOACK
 #define CC2520_CONF_AUTOACK 0
 #endif /* CC2520_CONF_AUTOACK */
@@ -178,6 +179,9 @@ static void
 on(void)
 {
   CC2520_ENABLE_FIFOP_INT();
+#ifdef CONTIKI_TARGET_MODFLEX
+  CC2520_SET_CC2591_RXMODE;
+#endif
   strobe(CC2520_INS_SRXON);
 
   BUSYWAIT_UNTIL(status() & (BV(CC2520_XOSC16M_STABLE)), RTIMER_SECOND / 100);
@@ -201,6 +205,9 @@ off(void)
   if(!CC2520_FIFOP_IS_1) {
     flushrx();
   }
+#ifdef CONTIKI_TARGET_MODFLEX
+  CC2520_SET_CC2591_RXMODE;
+#endif
 }
 /*---------------------------------------------------------------------------*/
 #define GET_LOCK() locked++
@@ -231,6 +238,8 @@ setreg(uint16_t regname, uint8_t value)
 {
   CC2520_WRITE_REG(regname, value);
 }
+
+
 /*---------------------------------------------------------------------------*/
 static void
 set_txpower(uint8_t power)
@@ -364,10 +373,20 @@ cc2520_transmit(unsigned short payload_len)
 #endif
 
 #if WITH_SEND_CCA
+#ifdef CONTIKI_TARGET_MODFLEX
+  CC2520_SET_CC2591_RXMODE;
+#endif
   strobe(CC2520_INS_SRXON);
   BUSYWAIT_UNTIL(status() & BV(CC2520_RSSI_VALID) , RTIMER_SECOND / 10);
+#ifdef CONTIKI_TARGET_MODFLEX
+CC2520_SET_CC2591_TXMODE;
+#endif
   strobe(CC2520_INS_STXONCCA);
+
 #else /* WITH_SEND_CCA */
+#ifdef CONTIKI_TARGET_MODFLEX
+  CC2520_SET_CC2591_TXMODE;
+#endif
   strobe(CC2520_INS_STXON);
 #endif /* WITH_SEND_CCA */
   for(i = LOOP_20_SYMBOLS; i > 0; i--) {
@@ -416,7 +435,6 @@ cc2520_transmit(unsigned short payload_len)
       }
 
       RELEASE_LOCK();
-
       return RADIO_TX_OK;
     }
   }
@@ -463,6 +481,7 @@ cc2520_prepare(const void *payload, unsigned short payload_len)
 }
 /*---------------------------------------------------------------------------*/
 static int
+
 cc2520_send(const void *payload, unsigned short payload_len)
 {
   cc2520_prepare(payload, payload_len);
@@ -549,6 +568,9 @@ cc2520_set_channel(int c)
   /* If we are in receive mode, we issue an SRXON command to ensure
      that the VCO is calibrated. */
   if(receive_on) {
+#ifdef CONTIKI_TARGET_MODFLEX
+  CC2520_SET_CC2591_RXMODE;
+#endif
     strobe(CC2520_INS_SRXON);
   }
 

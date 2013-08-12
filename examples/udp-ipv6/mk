@@ -1,0 +1,4 @@
+msp430-objcopy udp-server.modflex -O ihex udp-server.ihex
+msp430-objcopy udp-client.modflex -O ihex udp-client.ihex
+mv udp-server.ihex udp-server.hex
+mv udp-client.ihex udp-client.hex

@@ -30,7 +30,7 @@
 #include "contiki.h"
 #include "contiki-lib.h"
 #include "contiki-net.h"
-
+#include "led-debug.c"
 #include <string.h>
 
 #define DEBUG DEBUG_PRINT
@@ -44,6 +44,8 @@ static struct uip_udp_conn *server_conn;
 
 PROCESS(udp_server_process, "UDP server process");
 AUTOSTART_PROCESSES(&udp_server_process);
+static char sendcount = 1;
+static char receivecount = 1;
 /*---------------------------------------------------------------------------*/
 static void
 tcpip_handler(void)
@@ -53,15 +55,16 @@ tcpip_handler(void)
 
   if(uip_newdata()) {
     ((char *)uip_appdata)[uip_datalen()] = 0;
-    PRINTF("Server received: '%s' from ", (char *)uip_appdata);
-    PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
-    PRINTF("\n");
+//    PRINTF("Server received: '%s' from ", (char *)uip_appdata);
+//    PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
+//    PRINTF("\n");
 
     uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
-    PRINTF("Responding with message: ");
-    sprintf(buf, "Hello from the server! (%d)", ++seq_id);
-    PRINTF("%s\n", buf);
-
+ //   PRINTF("Responding with message: ");
+ //   sprintf(buf, "Hello from the server! (%d)", ++seq_id);
+ //   PRINTF("%s\n", buf);
+ //   display_led567(sendcount ++);
+    if(sendcount == 8) {sendcount = 1;}
     uip_udp_packet_send(server_conn, buf, strlen(buf));
     /* Restore server connection to allow data from any node */
     memset(&server_conn->ripaddr, 0, sizeof(server_conn->ripaddr));
@@ -104,10 +107,12 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
   server_conn = udp_new(NULL, UIP_HTONS(3001), NULL);
   udp_bind(server_conn, UIP_HTONS(3000));
-
+  display_leds(0xF7) ;
   while(1) {
     PROCESS_YIELD();
     if(ev == tcpip_event) {
+      display_led123(receivecount ++);
+      if(receivecount == 8) { receivecount = 1;}
       tcpip_handler();
     }
   }

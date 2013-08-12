@@ -110,6 +110,9 @@ watchdog_init(void)
 #if CONTIKI_TARGET_WISMOTE
   SFRIFG1 &= ~WDTIFG;
   SFRIE1 |= WDTIE;
+#elif CONTIKI_TARGET_MODFLEX
+  SFRIFG1 &= ~WDTIFG;
+  SFRIE1 |= WDTIE;
 #else
   IFG1 &= ~WDTIFG;
   IE1 |= WDTIE;

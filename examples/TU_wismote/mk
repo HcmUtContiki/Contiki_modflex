@@ -1,0 +1,2 @@
+msp430-objcopy radio-test.wismote -O ihex radio-test.ihex
+mv radio-test.ihex radio-test.hex

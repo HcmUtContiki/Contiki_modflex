@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="examples/sky"/>
+	<classpathentry kind="src" path="tools/coffee-manager"/>
+	<classpathentry kind="src" path="tools/collect-view/src"/>
+	<classpathentry kind="src" path="tools/cooja/apps/avrora/src"/>
+	<classpathentry kind="src" path="tools/cooja/apps/collect-view/java"/>
+	<classpathentry kind="src" path="tools/cooja/apps/mrm/java"/>
+	<classpathentry kind="src" path="tools/cooja/apps/mspsim/src"/>
+	<classpathentry kind="src" path="tools/cooja/apps/native_gateway/java"/>
+	<classpathentry kind="src" path="tools/cooja/apps/powertracker/java"/>
+	<classpathentry kind="src" path="tools/cooja/apps/serial_socket/java"/>
+	<classpathentry kind="src" path="tools/cooja/examples/appmote_rimeabc"/>
+	<classpathentry kind="src" path="tools/cooja/examples/project_new_interface/java"/>
+	<classpathentry kind="src" path="tools/cooja/examples/project_new_plugin/java"/>
+	<classpathentry kind="src" path="tools/cooja/examples/project_new_radiomedium/java"/>
+	<classpathentry kind="src" path="tools/cooja/java"/>
+	<classpathentry kind="src" path="tools/z80/java/src"/>
+	<classpathentry kind="lib" path="tools/collect-view/dist/collect-view.jar"/>
+	<classpathentry kind="lib" path="tools/cooja/apps/avrora/lib/avrora-small.jar"/>
+	<classpathentry kind="lib" path="tools/cooja/apps/powertracker/lib/powertracker.jar"/>
+	<classpathentry kind="lib" path="tools/cooja/apps/serial_socket/lib/serial_socket.jar"/>
+	<classpathentry kind="lib" path="tools/cooja/lib/jdom.jar"/>
+	<classpathentry kind="lib" path="tools/cooja/lib/jsyntaxpane.jar"/>
+	<classpathentry kind="lib" path="tools/cooja/lib/log4j.jar"/>
+	<classpathentry kind="lib" path="tools/mspsim/lib/jcommon-1.0.14.jar"/>
+	<classpathentry kind="lib" path="tools/mspsim/lib/jfreechart-1.0.11.jar"/>
+	<classpathentry kind="lib" path="tools/mspsim/lib/jipv6.jar"/>
+	<classpathentry kind="lib" path="tools/mspsim/mspsim.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="eclipse_build"/>
+</classpath>
