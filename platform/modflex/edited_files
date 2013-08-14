@@ -2,14 +2,16 @@
 makefile
 contiki-***-main.c
 contiki-***-platform.c
-----[modifyed]---------------------------------------------------------------------------
+----[modified]---------------------------------------------------------------------------
 leds-arch                   //led
 button-sensor.h             //button
 contiki-conf.h              //cc2520
 contiki-modflex-platform.c  //sensor
 /cpu/msp430/msp430def.h     //pin cc sfd hlm
+cc2520.c, cc2520-arch-sfd.c //cc2520
 ----[added file]-------------------------------------------------------------------------
 button-sensor.h
+
 ----[error log]--------------------------------------------------------------------------
 ../../cpu/msp430/./watchdog.c: In function ‘watchdog_init’:
 ../../cpu/msp430/./watchdog.c:114:3: error: ‘IFG1’ undeclared (first use in this function)
