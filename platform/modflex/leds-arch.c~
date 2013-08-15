@@ -47,7 +47,7 @@ leds_arch_init(void)
 {
 //  P4DIR |= (BIT6 + BIT5 + BIT5);
 //  P4OUT |= (BIT4 + BIT6 + BIT5);
-    P4DIR |= 0xFF;
+    P4DIR = 0xFF;
     P4OUT |= 0xFF;
 }
 /*---------------------------------------------------------------------------*/

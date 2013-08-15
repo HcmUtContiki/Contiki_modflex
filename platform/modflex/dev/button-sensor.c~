@@ -41,7 +41,6 @@ static struct timer debouncetimer[3];
 static int status_1(int type);
 static int status_2(int type);
 static int status_3(int type);
-char led_count = 0x55;
 HWCONF_PIN(BUTTON_1, 2, 0);
 HWCONF_IRQ(BUTTON_1, 2, 0);
 HWCONF_PIN(BUTTON_2, 2, 1);
@@ -49,14 +48,13 @@ HWCONF_IRQ(BUTTON_2, 2, 1);
 HWCONF_PIN(BUTTON_3, 2, 2);
 HWCONF_IRQ(BUTTON_3, 2, 2);
 /*---------------------------------------------------------------------------*/
-ISR(PORT2, irq_p2)
+ISR(PORT2, irq_p2dasdasdsa)
 {
   ENERGEST_ON(ENERGEST_TYPE_IRQ);
 
   if(BUTTON_1_CHECK_IRQ() && timer_expired(&debouncetimer[0])) {
     timer_set(&debouncetimer[0], CLOCK_SECOND / 4);
     sensors_changed(&button_1_sensor);
-    led_count ++;
     LPM4_EXIT;
     P2IFG &= ~BIT0;
   }
@@ -64,7 +62,6 @@ ISR(PORT2, irq_p2)
   if(BUTTON_2_CHECK_IRQ() && timer_expired(&debouncetimer[1])) {
     timer_set(&debouncetimer[1], CLOCK_SECOND / 4);
     sensors_changed(&button_2_sensor);
-    led_count --;
     LPM4_EXIT;
     P2IFG &= ~BIT1;
   }
@@ -72,7 +69,6 @@ ISR(PORT2, irq_p2)
   if(BUTTON_3_CHECK_IRQ() && timer_expired(&debouncetimer[2])) {
     timer_set(&debouncetimer[2], CLOCK_SECOND / 4);
     sensors_changed(&button_3_sensor);
-    led_count ^= 0xFF;
     LPM4_EXIT;
     P2IFG &= ~BIT2;
   }

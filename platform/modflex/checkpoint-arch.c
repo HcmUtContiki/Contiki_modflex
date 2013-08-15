@@ -113,14 +113,14 @@ write_array(int fd, unsigned char *mem, uint16_t len)
 }
 #endif /* 0 */
 /*---------------------------------------------------------------------------*/
-static void
-write_word(int fd, uint16_t w)
-{
-  word_union_t tmp;
-  tmp.u16 = w;
-  write_byte(fd, tmp.u8[0]);
-  write_byte(fd, tmp.u8[1]);
-}
+//static void
+//write_word(int fd, uint16_t w)
+//{
+//  word_union_t tmp;
+//  tmp.u16 = w;
+//  write_byte(fd, tmp.u8[0]);
+//  write_byte(fd, tmp.u8[1]);
+//}
 /*---------------------------------------------------------------------------*/
 static uint8_t
 read_byte(int fd)
@@ -152,14 +152,14 @@ read_byte(int fd)
 #endif /* DATA_AS_HEX */
 }
 /*---------------------------------------------------------------------------*/
-static uint16_t
-read_word(int fd)
-{
-  word_union_t tmp;
-  tmp.u8[0] = read_byte(fd);
-  tmp.u8[1] = read_byte(fd);
-  return tmp.u16;
-}
+//static uint16_t
+//read_word(int fd)
+//{
+//  word_union_t tmp;
+//  tmp.u8[0] = read_byte(fd);
+//  tmp.u8[1] = read_byte(fd);
+//  return tmp.u16;
+//}
 /*---------------------------------------------------------------------------*/
 static void
 thread_checkpoint(int fd)

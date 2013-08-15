@@ -45,15 +45,72 @@
 
 #include <stdio.h>
 #include <string.h>
-
+#include "leds-arch.h"
 #define UDP_PORT 1234
 #define SERVICE_ID 190
 
 #define SEND_INTERVAL		(10 * CLOCK_SECOND)
 #define SEND_TIME		(random_rand() % (SEND_INTERVAL))
+/*---------------------------------------------------------------------------*/
+void display_led123(char count){
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_1); }
+  else{            leds_off( LEDS_1); }
 
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
+}
+void display_led567(char count){
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_5); }
+  else{            leds_off( LEDS_5); }
+
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_6); }
+  else{            leds_off( LEDS_6); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_7); }
+  else{            leds_off( LEDS_7); }
+}
+/*---------------------------------------------------------------------------*/
 static struct simple_udp_connection unicast_connection;
+void
+display_leds(int count) 
+{
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_1); }
+  else{            leds_off( LEDS_1); }
 
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
+
+  //led 4
+  if(count & BIT3){ leds_on( LEDS_4); }
+  else{            leds_off( LEDS_4); }
+
+  //led 5
+  if(count & BIT4){ leds_on( LEDS_5); }
+  else{            leds_off( LEDS_5); }
+
+  //led 6
+  if(count & BIT5){ leds_on( LEDS_6); }
+  else{            leds_off( LEDS_6); }
+
+  //led 7
+  if(count & BIT6){ leds_on( LEDS_7); }
+  else{            leds_off( LEDS_7); }
+}
 /*---------------------------------------------------------------------------*/
 PROCESS(unicast_receiver_process, "Unicast receiver example process");
 AUTOSTART_PROCESSES(&unicast_receiver_process);
@@ -71,8 +128,13 @@ receiver(struct simple_udp_connection *c,
   uip_debug_ipaddr_print(sender_addr);
   printf(" on port %d from port %d with length %d: '%s'\n",
          receiver_port, sender_port, datalen, data);
+  {
+     static char count = 0;
+     display_led123( count ++) ;
+     if(count == 8) {count = BIT0;}
+  }
 }
-/*---------------------------------------------------------------------------*/
+/*--ua-------------------------------------------------------------------------*/
 static uip_ipaddr_t *
 set_global_address(void)
 {
@@ -133,9 +195,15 @@ PROCESS_THREAD(unicast_receiver_process, ev, data)
 
   simple_udp_register(&unicast_connection, UDP_PORT,
                       NULL, UDP_PORT, receiver);
+  display_leds(0x55) ;
 
   while(1) {
     PROCESS_WAIT_EVENT();
+    {
+      static char count = 0;
+      display_led567( count ++) ;
+      if(count == 8) {count = BIT0;}
+   }
   }
   PROCESS_END();
 }

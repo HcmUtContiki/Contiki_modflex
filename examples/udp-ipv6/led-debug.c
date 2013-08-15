@@ -1,7 +1,7 @@
 #include "led-debug.h"
 
 void
-display_leds(char count) 
+display_leds(int count) 
 {
   //led 1
   if(count & BIT0){ leds_on( LEDS_1); }
@@ -31,7 +31,7 @@ display_leds(char count)
   if(count & BIT6){ leds_on( LEDS_7); }
   else{            leds_off( LEDS_7); }
 }
-void display_led123(char count)
+void display_led123(int count)
 {
   //led 1
   if(count & BIT0){ leds_on( LEDS_1); }
@@ -45,7 +45,7 @@ void display_led123(char count)
   if(count & BIT2){ leds_on( LEDS_3); }
   else{            leds_off( LEDS_3); }
 }
-void display_led567(char count)
+void display_led567(int count)
 {
   //led 1
   if(count & BIT0){ leds_on( LEDS_5); }

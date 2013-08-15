@@ -45,7 +45,6 @@
 #include "sys/timetable.h"
 #include <string.h>
 
-//#include "dev/leds.h"
 #ifndef CC2520_CONF_AUTOACK
 #define CC2520_CONF_AUTOACK 0
 #endif /* CC2520_CONF_AUTOACK */
@@ -295,8 +294,6 @@ cc2520_init(void)
 	  0x81 -> -2 dBm
 	  0x32 -> 0 dBm
 	  0x13 -> 1 dBm
-	  0x32 -> 0 dBm
-	  0x13 -> 1 dBm
 	  0xAB -> 2 dBm
 	  0xF2 -> 3 dBm
 	  0xF7 -> 5 dBm
@@ -380,7 +377,7 @@ cc2520_transmit(unsigned short payload_len)
   BUSYWAIT_UNTIL(status() & BV(CC2520_RSSI_VALID) , RTIMER_SECOND / 10);
 #ifdef CONTIKI_TARGET_MODFLEX
 CC2520_SET_CC2591_TXMODE;
-#endif
+#endif 
   strobe(CC2520_INS_STXONCCA);
 
 #else /* WITH_SEND_CCA */

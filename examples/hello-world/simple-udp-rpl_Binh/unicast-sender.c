@@ -45,15 +45,73 @@
 
 #include <stdio.h>
 #include <string.h>
-
+#include "leds-arch.h"
 #define UDP_PORT 1234
 #define SERVICE_ID 190
 
 #define SEND_INTERVAL		(60 * CLOCK_SECOND)
 #define SEND_TIME		(random_rand() % (SEND_INTERVAL))
+/*---------------------------------------------------------------------------*/
+void display_led123(char count){
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_1); }
+  else{            leds_off( LEDS_1); }
+
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
+}
+void display_led567(char count){
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_5); }
+  else{            leds_off( LEDS_5); }
+
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_6); }
+  else{            leds_off( LEDS_6); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_7); }
+  else{            leds_off( LEDS_7); }
+}
+/*---------------------------------------------------------------------------*/
 
 static struct simple_udp_connection unicast_connection;
+void
+display_leds(int count) 
+{
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_1); }
+  else{            leds_off( LEDS_1); }
 
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
+
+  //led 4
+  if(count & BIT3){ leds_on( LEDS_4); }
+  else{            leds_off( LEDS_4); }
+
+  //led 5
+  if(count & BIT4){ leds_on( LEDS_5); }
+  else{            leds_off( LEDS_5); }
+
+  //led 6
+  if(count & BIT5){ leds_on( LEDS_6); }
+  else{            leds_off( LEDS_6); }
+
+  //led 7
+  if(count & BIT6){ leds_on( LEDS_7); }
+  else{            leds_off( LEDS_7); }
+}
 /*---------------------------------------------------------------------------*/
 PROCESS(unicast_sender_process, "Unicast sender example process");
 AUTOSTART_PROCESSES(&unicast_sender_process);
@@ -68,7 +126,12 @@ receiver(struct simple_udp_connection *c,
          uint16_t datalen)
 {
   printf("Data received on port %d from port %d with length %d\n",
-         receiver_port, sender_port, datalen);
+      receiver_port, sender_port, datalen);
+      {
+         static char count = 1;
+         display_led123( count ++) ;
+         if(count == BIT7) {count = BIT0;}
+      }
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -82,13 +145,13 @@ set_global_address(void)
   uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
   uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
 
-  printf("IPv6 addresses: ");
+//  printf("IPv6 addresses: ");
   for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
     state = uip_ds6_if.addr_list[i].state;
     if(uip_ds6_if.addr_list[i].isused &&
        (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
       uip_debug_ipaddr_print(&uip_ds6_if.addr_list[i].ipaddr);
-      printf("\n");
+      //printf("\n");
     }
   }
 }
@@ -109,6 +172,7 @@ PROCESS_THREAD(unicast_sender_process, ev, data)
                       NULL, UDP_PORT, receiver);
 
   etimer_set(&periodic_timer, SEND_INTERVAL);
+  display_leds(0xff) ;
   while(1) {
 
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
@@ -127,6 +191,11 @@ PROCESS_THREAD(unicast_sender_process, ev, data)
       sprintf(buf, "Message %d", message_number);
       message_number++;
       simple_udp_sendto(&unicast_connection, buf, strlen(buf) + 1, addr);
+      {
+        static char count = 0;
+        display_led123( count ++) ;
+        if(count == 8) {count = BIT0;}
+      }
     } else {
       printf("Service %d not found\n", SERVICE_ID);
     }

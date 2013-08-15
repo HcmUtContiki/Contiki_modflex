@@ -123,7 +123,7 @@ force_inclusion(int d1, int d2)
 #endif
 /*---------------------------------------------------------------------------*/
 #ifndef NODE_ID
-#define NODE_ID	0x03
+#define NODE_ID	0x02
 #endif /* NODE_ID */
 static void
 set_rime_addr(void)
@@ -308,6 +308,23 @@ main(int argc, char **argv)
     uip_ds6_addr_t *lladdr;
     int i;
     lladdr = uip_ds6_get_link_local(-1);
+/*    lladdr->ipaddr.u8[00] = 0xfe;
+    lladdr->ipaddr.u8[01] = 0x80;
+    lladdr->ipaddr.u8[02] = 0x00;
+    lladdr->ipaddr.u8[03] = 0x00;
+    lladdr->ipaddr.u8[04] = 0x00;
+    lladdr->ipaddr.u8[05] = 0x00;
+    lladdr->ipaddr.u8[06] = 0x00;
+    lladdr->ipaddr.u8[07] = 0x00;
+  //lladdr->ipaddr.u8[08] = 0x09;
+  //lladdr->ipaddr.u8[09] = 0x0A;
+    lladdr->ipaddr.u8[10] = 0x00;
+    lladdr->ipaddr.u8[11] = 0x00; 
+    lladdr->ipaddr.u8[12] = 0x00;
+    lladdr->ipaddr.u8[13] = 0x00; 
+    lladdr->ipaddr.u8[14] = 0x00;
+    lladdr->ipaddr.u8[15] = 0x02;
+*/
     for(i = 0; i < 7; ++i) {
       printf("%02x%02x:", lladdr->ipaddr.u8[i * 2],
              lladdr->ipaddr.u8[i * 2 + 1]);

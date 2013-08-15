@@ -30,23 +30,53 @@
 #include "contiki.h"
 #include "contiki-lib.h"
 #include "contiki-net.h"
-#include "led-debug.c"
+
 #include <string.h>
 
 #define DEBUG DEBUG_PRINT
 #include "net/uip-debug.h"
 
-#define SEND_INTERVAL		15 * CLOCK_SECOND
+//#define SEND_INTERVAL		15 * CLOCK_SECOND
+#define SEND_INTERVAL		CLOCK_SECOND
 #define MAX_PAYLOAD_LEN		40
+#ifdef CONTIKI_TARGET_MODFLEX
+//#include "led-debug.c"
+#include "leds-arch.h"
+//static char sendcount = 1;
+//static char receivecount = 1;
+#endif
 
 static struct uip_udp_conn *client_conn;
-static char sendcount = 1;
-static char receivecount = 1;
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
 AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
-
+#ifdef CONTIKI_TARGET_MODFLEX
+#define ON  1
+#define OFF 0
+struct indicator {
+  int onoff;
+  int led;
+  clock_time_t interval;
+  struct etimer timer;
+};
+static struct indicator recv, send;
+/*---------------------------------------------------------------------*/
+static void
+set(struct indicator *indicator, int onoff) {
+  if(indicator->onoff ^ onoff) {
+    indicator->onoff = onoff;
+    if(onoff) {
+      leds_on(indicator->led);
+    } else {
+      leds_off(indicator->led);
+    }
+  }
+  if(onoff) {
+    etimer_set(&indicator->timer, indicator->interval);
+  }
+}
+#endif
 static void
 tcpip_handler(void)
 {
@@ -55,12 +85,17 @@ tcpip_handler(void)
   if(uip_newdata()) {
     str = uip_appdata;
     str[uip_datalen()] = '\0';
-    printf("Response from the server: '%s'\n", str);
-    display_led123(receivecount ++);
-    if(receivecount == 8) { receivecount = 1;}
+//    printf("Response from the server: '%s'\n", str);
+#ifdef CONTIKI_TARGET_MODFLEX
+    set(&recv, ON);
+//    display_led123(receivecount ++);
+//    if(receivecount == 8) { receivecount = 1;}
+#endif
   }
 }
 /*---------------------------------------------------------------------------*/
+static void
+print_local_addresses(void);
 static char buf[MAX_PAYLOAD_LEN];
 static void
 timeout_handler(void)
@@ -68,16 +103,19 @@ timeout_handler(void)
   static int seq_id;
 
 //  printf("Client sending to: ");
-  display_led123(sendcount ++);
-  if(sendcount == 8) {sendcount = 1;}
   PRINT6ADDR(&client_conn->ripaddr);
-//  sprintf(buf, "Hello %d from the client", ++seq_id);
-//  printf(" (msg: %s)\n", buf);
+  sprintf(buf, "Hello %d from the client", ++seq_id);
+  printf(" (msg: %s)\n", buf);
 #if SEND_TOO_LARGE_PACKET_TO_TEST_FRAGMENTATION
   uip_udp_packet_send(client_conn, buf, UIP_APPDATA_SIZE);
 #else /* SEND_TOO_LARGE_PACKET_TO_TEST_FRAGMENTATION */
   uip_udp_packet_send(client_conn, buf, strlen(buf));
 #endif /* SEND_TOO_LARGE_PACKET_TO_TEST_FRAGMENTATION */
+#ifdef CONTIKI_TARGET_MODFLEX
+  set(&send, ON);
+//  display_led567(sendcount ++);
+//  if(sendcount == 8) {sendcount = 1;}
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -86,13 +124,13 @@ print_local_addresses(void)
   int i;
   uint8_t state;
 
- // PRINTF("Client IPv6 addresses: ");
+  PRINTF("Client IPv6 addresses: ");
   for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
     state = uip_ds6_if.addr_list[i].state;
     if(uip_ds6_if.addr_list[i].isused &&
        (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
-   //   PRINT6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
-   //   PRINTF("\n");
+      PRINT6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
+      PRINTF("\n");
     }
   }
 }
@@ -116,10 +154,11 @@ set_connection_address(uip_ipaddr_t *ipaddr)
 #define QUOTEME(x) _QUOTEME(x)
 #ifdef UDP_CONNECTION_ADDR
   if(uiplib_ipaddrconv(QUOTEME(UDP_CONNECTION_ADDR), ipaddr) == 0) {
-   // PRINTF("UDP client failed to parse address '%s'\n", QUOTEME(UDP_CONNECTION_ADDR));
+    PRINTF("UDP client failed to parse address '%s'\n", QUOTEME(UDP_CONNECTION_ADDR));
   }
 #elif UIP_CONF_ROUTER
-  uip_ip6addr(ipaddr,0xaaaa,0,0,0,0x0212,0x7404,0x0004,0x0404);
+//  uip_ip6addr(ipaddr,0xaaaa,0,0,0,0x0212,0x7404,0x0004,0x0404);
+  uip_ip6addr(ipaddr,0xFE80,0,0,0,0x0200,0x0000,0x0000,0x0002);
 #else
   uip_ip6addr(ipaddr,0xfe80,0,0,0,0x6466,0x6666,0x6666,0x6666);
 #endif /* UDP_CONNECTION_ADDR */
@@ -131,7 +170,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   uip_ipaddr_t ipaddr;
 
   PROCESS_BEGIN();
-  //PRINTF("UDP client process started\n");
+  PRINTF("UDP client process started\n");
 
 #if UIP_CONF_ROUTER
   set_global_address();
@@ -151,7 +190,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
 	UIP_HTONS(client_conn->lport), UIP_HTONS(client_conn->rport));
 
   etimer_set(&et, SEND_INTERVAL);
-  display_leds(0x15) ;
+#ifdef CONTIKI_TARGET_MODFLEX
+  recv.interval = CLOCK_SECOND/2;
+  send.interval = 1;
+  send.led = LEDS_6;
+  recv.led = LEDS_7;
+#endif
   while(1) {
     PROCESS_YIELD();
     if(etimer_expired(&et)) {
@@ -159,6 +203,11 @@ PROCESS_THREAD(udp_client_process, ev, data)
       etimer_restart(&et);
     } else if(ev == tcpip_event) {
       tcpip_handler();
+    }
+    if (ev == PROCESS_EVENT_TIMER && data == &send.timer) {
+          set(&send, OFF);
+    } else if (ev == PROCESS_EVENT_TIMER && data == &recv.timer) {
+          set(&recv, OFF);
     }
   }
 
