@@ -197,21 +197,19 @@ void cc2520_set_cca_threshold(int value);
 
 /*---------------------------------------------------------------------------*/
 #ifdef CONTIKI_TARGET_MODFLEX
-#define GPIOCTRL_SETB 0X7F
-#define GPIOCTRL_CLRB 0X7E
-#define CC2520_SET_CC2591_TXMODE                   \
-do {                                               \
+#define GPIOCTRL_SETB 0x7F
+#define GPIOCTRL_CLRB 0x7E
+#define CC2520_SET_CC2591_TXMODE                            \
+  do {                                                      \
     CC2520_WRITE_REG(CC2520_GPIOCTRL5,GPIOCTRL_SETB);       \
     CC2520_WRITE_REG(CC2520_GPIOCTRL4,GPIOCTRL_CLRB);       \
-    CC2520_WRITE_REG(CC2520_GPIOCTRL3,GPIOCTRL_SETB);       \
-} while(0)
+  } while(0)
 
-#define CC2520_SET_CC2591_RXMODE                   \
-do {                                               \
+#define CC2520_SET_CC2591_RXMODE                            \
+  do {                                                      \
     CC2520_WRITE_REG(CC2520_GPIOCTRL5,GPIOCTRL_CLRB);       \
     CC2520_WRITE_REG(CC2520_GPIOCTRL4,GPIOCTRL_SETB);       \
-    CC2520_WRITE_REG(CC2520_GPIOCTRL3,GPIOCTRL_SETB);       \
-} while(0)
+  } while(0)
 
 #endif //FOR MODPLEX PLATFORM
 

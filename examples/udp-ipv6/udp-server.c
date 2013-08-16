@@ -140,7 +140,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
 server_conn = udp_new(NULL, UIP_HTONS(3001), NULL);
   udp_bind(server_conn, UIP_HTONS(3000));
 #ifdef CONTIKI_TARGET_MODFLEX
-  recv.interval = CLOCK_SECOND/2;
+  recv.interval = CLOCK_SECOND;
   send.interval = 1;
   send.led = LEDS_6;
   recv.led = LEDS_7;

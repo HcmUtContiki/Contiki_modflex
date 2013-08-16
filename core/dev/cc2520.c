@@ -197,16 +197,18 @@ off(void)
   /* Wait for transmission to end before turning radio off. */
   BUSYWAIT_UNTIL(!(status() & BV(CC2520_TX_ACTIVE)), RTIMER_SECOND / 10);
 
+#ifdef CONTIKI_TARGET_MODFLEX
+  CC2520_SET_CC2591_RXMODE;
+#endif
+
   ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
+
   strobe(CC2520_INS_SRFOFF);
   CC2520_DISABLE_FIFOP_INT();
 
   if(!CC2520_FIFOP_IS_1) {
     flushrx();
   }
-#ifdef CONTIKI_TARGET_MODFLEX
-  CC2520_SET_CC2591_RXMODE;
-#endif
 }
 /*---------------------------------------------------------------------------*/
 #define GET_LOCK() locked++
@@ -273,9 +275,16 @@ cc2520_init(void)
   clock_delay(127);
   SET_RESET_INACTIVE();
   clock_delay(125);
+  /* configure GPIO pin */
+#ifdef CONTIKI_TARGET_MODFLEX
+  setreg(CC2520_GPIOCTRL5,GPIOCTRL_CLRB);       
+  setreg(CC2520_GPIOCTRL4,GPIOCTRL_SETB);       
+  setreg(CC2520_GPIOCTRL3,GPIOCTRL_SETB);       
+#endif
   /* Turn on the crystal oscillator. */
   strobe(CC2520_INS_SXOSCON);
   clock_delay(125);
+
 
   BUSYWAIT_UNTIL(status() & (BV(CC2520_XOSC16M_STABLE)), RTIMER_SECOND / 100);
 
@@ -379,7 +388,12 @@ cc2520_transmit(unsigned short payload_len)
 CC2520_SET_CC2591_TXMODE;
 #endif 
   strobe(CC2520_INS_STXONCCA);
-
+  
+#ifdef CONTIKI_TARGET_MODFLEX
+/* Wait for transmission to end before change to RX mode */
+  BUSYWAIT_UNTIL(!(status() & BV(CC2520_TX_ACTIVE)), RTIMER_SECOND / 10);
+  CC2520_SET_CC2591_RXMODE;
+#endif
 #else /* WITH_SEND_CCA */
 #ifdef CONTIKI_TARGET_MODFLEX
   CC2520_SET_CC2591_TXMODE;
@@ -390,7 +404,8 @@ CC2520_SET_CC2591_TXMODE;
     if(CC2520_SFD_IS_1) {
       {
         rtimer_clock_t sfd_timestamp;
-        sfd_timestamp = cc2520_sfd_start_time;
+        sfd_timestamp = TBCCR1;
+        //sfd_timestamp = cc2520_sfd_start_time; //binh
         if(packetbuf_attr(PACKETBUF_ATTR_PACKET_TYPE) ==
            PACKETBUF_ATTR_PACKET_TYPE_TIMESTAMP) {
           /* Write timestamp to last two bytes of packet in TXFIFO. */

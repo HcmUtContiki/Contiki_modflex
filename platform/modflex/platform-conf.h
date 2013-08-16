@@ -57,7 +57,7 @@
 
 #define HAVE_STDINT_H
 #include "msp430def.h"
-//#include "dev/cc2520.h"
+
 
 /* Types for clocks and uip_stats */
 typedef unsigned short uip_stats_t;
@@ -143,16 +143,16 @@ typedef unsigned long off_t;
 #define CC2520_FIFO_PORT(type)     P1##type
 #define CC2520_FIFO_PIN            5
 /* P8.7 - Input: CCA from CC2520 */   //dumb port
-//#define CC2520_CCA_PORT(type)      //P8##type
-//#define CC2520_CCA_PIN             //7
+/*#define CC2520_CCA_PORT(type)  */   //P8##type
+/*#define CC2520_CCA_PIN         */   //7
 
 /* P8.6 - Input:  SFD from CC2520 */ //dumb port
-//#define CC2520_SFD_PORT(type)      //P8##type
-//#define CC2520_SFD_PIN             //6
+/*#define CC2520_SFD_PORT(type)   */ //P8##type
+/*#define CC2520_SFD_PIN          */ //6 
 
 /* P3.0 - Output: SPI Chip Select (CS_N) */
 #define CC2520_CSN_PORT(type)      P3##type
-#define CC2520_CSN_PIN             0
+#define CC2520_CSN_PIN             0 
 
 /* P1.7 - Output: VREG_EN to CC2520 */
 #define CC2520_VREG_PORT(type)     P1##type
@@ -166,11 +166,10 @@ typedef unsigned long off_t;
 /* Pin status.CC2520 */
 #define CC2520_FIFOP_IS_1 (!!(CC2520_FIFOP_PORT(IN) & BV(CC2520_FIFOP_PIN)))
 #define CC2520_FIFO_IS_1  (!!(CC2520_FIFO_PORT(IN) & BV(CC2520_FIFO_PIN)))
-//binh #define CC2520_CCA_IS_1   (!!(CC2520_CCA_PORT(IN) & BV(CC2520_CCA_PIN)))
-//binh #define CC2520_SFD_IS_1   (!!(CC2520_SFD_PORT(IN) & BV(CC2520_SFD_PIN)))
-
-#define CC2520_CCA_IS_1  (getreg(CC2520_FSMSTAT1) & BIT4)
-#define CC2520_SFD_IS_1  (getreg(CC2520_FSMSTAT1) & BIT5)
+/* #define CC2520_CCA_IS_1   (!!(CC2520_CCA_PORT(IN) & BV(CC2520_CCA_PIN))) */
+/* #define CC2520_SFD_IS_1   (!!(CC2520_SFD_PORT(IN) & BV(CC2520_SFD_PIN))) */
+#define CC2520_CCA_IS_1   (getreg(CC2520_FSMSTAT1) & BIT4)
+#define CC2520_SFD_IS_1   (getreg(CC2520_FSMSTAT1) & BIT5)
 
 /* The CC2520 reset pin. */
 #define SET_RESET_INACTIVE()   (CC2520_RESET_PORT(OUT) |=  BV(CC2520_RESET_PIN))
