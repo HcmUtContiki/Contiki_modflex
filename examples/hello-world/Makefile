@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = radio-test-ok-timer
+CONTIKI_PROJECT = test-radio-data-light-button
 all: $(CONTIKI_PROJECT)
 
 #UIP_CONF_IPV6=1
