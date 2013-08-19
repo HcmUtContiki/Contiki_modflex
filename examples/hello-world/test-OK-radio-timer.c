@@ -51,7 +51,7 @@
 #include "dev/cc2520.h"
 #include <stdio.h>
 #include <string.h>
-
+#include "leds-arch.h"
 PROCESS(radio_test_process, "Radio test");
 AUTOSTART_PROCESSES(&radio_test_process);
 
@@ -69,7 +69,8 @@ struct indicator {
   struct etimer timer;
 };
 static struct etimer send_timer;
-static struct indicator recv, other, flash;
+//static struct indicator recv, other, flash;
+static struct indicator recv, flash;
 
 /*---------------------------------------------------------------------*/
 static void
@@ -87,6 +88,36 @@ set(struct indicator *indicator, int onoff) {
   }
 }
 /*---------------------------------------------------------------------------*/
+static char count = 0;
+void
+leds_count(char count) 
+{
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
+
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_4); }
+  else{            leds_off( LEDS_4); }
+
+  //led 4
+  if(count & BIT3){ leds_on( LEDS_5); }
+  else{            leds_off( LEDS_5); }
+
+  //led 5
+  if(count & BIT4){ leds_on( LEDS_6); }
+  else{            leds_off( LEDS_6); }
+
+  //led 6
+  if(count & BIT5){ leds_on( LEDS_7); }
+  else{            leds_off( LEDS_7); }
+
+}
+/*---------------------------------------------------------------------*/
 static void
 abc_recv(struct abc_conn *c)
 {
@@ -100,8 +131,9 @@ abc_recv(struct abc_conn *c)
   } else {
     printf("Receive valid packet with data %s!!!! \n", (char *)packetbuf_dataptr());
     PROCESS_CONTEXT_BEGIN(&radio_test_process);
-    set(&recv, ON);
-    set(&other, ((char *)packetbuf_dataptr())[sizeof(HEADER)] ? ON : OFF);
+    leds_count(count ++);
+//    set(&recv, ON);
+//    set(&other, ((char *)packetbuf_dataptr())[sizeof(HEADER)] ? ON : OFF);
 
     /* synchronize the sending to keep the nodes from sending
        simultaneously */
@@ -122,45 +154,32 @@ PROCESS_THREAD(radio_test_process, ev, data)
   txpower = CC2520_TXPOWER_MAX;
 
   /* Initialize the indicators */
-  recv.onoff = other.onoff = flash.onoff = OFF;
-  recv.interval = other.interval = CLOCK_SECOND;
+//  recv.onoff = other.onoff = flash.onoff = OFF;
+  recv.onoff = flash.onoff = OFF;
+//  recv.interval = CLOCK_SECOND;
   flash.interval = 1;
-  flash.led = LEDS_RED;
-  recv.led = LEDS_GREEN;
-  other.led = LEDS_BLUE;
-
+  flash.led = LEDS_1;
+  //recv.led = LEDS_2;
+  //other.led = LEDS_3;
+  
   abc_open(&abc, PORT, &abc_call);
   etimer_set(&send_timer, CLOCK_SECOND);
-  SENSORS_ACTIVATE(button_sensor);
-
+  SENSORS_ACTIVATE(button_1_sensor);
   while(1) {
     PROCESS_WAIT_EVENT();
     if (ev == PROCESS_EVENT_TIMER) {
-        if(data == &send_timer) {
-	        etimer_reset(&send_timer);
-            /* send packet */
-	        packetbuf_copyfrom(HEADER, sizeof(HEADER));
-	        ((char *)packetbuf_dataptr())[sizeof(HEADER)] = recv.onoff;
-	        /* send arbitrary data to fill the packet size */
-	        packetbuf_set_datalen(PACKET_SIZE);
-	        set(&flash, ON);
-	        abc_send(&abc);
-        } else if(data == &other.timer) {
-	        set(&other, OFF);
-        } else if(data == &recv.timer) {
-	        set(&recv, OFF);
-        } else if(data == &flash.timer) {
-	        set(&flash, OFF);
-        }
-    }else if(ev == sensors_event && data == &button_sensor) {
-        if(txpower > 5) {
-	        txpower -= 5;
-        } else {
-	        txpower = CC2520_TXPOWER_MAX;
-	        leds_blink();
-        }
-        cc2520_set_txpower(txpower);
-        printf("txpower set to %u\n", txpower);
+       if(data == &send_timer) {
+//    if(ev == sensors_event && data == &button_1_sensor){
+          etimer_reset(&send_timer);
+          packetbuf_copyfrom(HEADER, sizeof(HEADER));
+          ((char *)packetbuf_dataptr())[sizeof(HEADER)] = recv.onoff;
+          /* send arbitrary data to fill the packet size */
+          packetbuf_set_datalen(PACKET_SIZE);
+          set(&flash, ON);
+          abc_send(&abc);
+       }else if(data == &flash.timer){
+          set(&flash, OFF);
+       }
     }
   }
   PROCESS_END();

@@ -41,33 +41,45 @@
 #include "contiki.h"
 
 #include <stdio.h> /* For printf() */
-#include "dev/leds.h"		/*for led test*/
 #include "dev/button-sensor.h"
-//#include "dev/light-sensor.h"
+#include "dev/leds.h"		/*for led test*/
+#include "leds-arch.h"
+static char count = 0x00;
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "Hello world process");
 AUTOSTART_PROCESSES(&hello_world_process);
-static int i = 0;
 /*---------------------------------------------------------------------------*/
 void
 display_leds(int count)
 {
   //led 1
-  i = count;
-  if(i % 2  == 1){ leds_on(    LEDS_GREEN); }
-  else{            leds_off(   LEDS_GREEN); }
+  if(count & BIT0){ leds_on( LEDS_1); }
+  else{            leds_off( LEDS_1); }
 
   //led 2
-  i = count/2;
-  if(i % 2  == 1){ leds_on(    LEDS_YELLOW); }
-  else{            leds_off(   LEDS_YELLOW); }
+  if(count & BIT1){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
 
   //led 3
-  i = count/4;
-  if(i % 2  == 1){ leds_on(    LEDS_RED); }
-  else{            leds_off(   LEDS_RED); }
-}
+  if(count & BIT2){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
 
+  //led 4
+  if(count & BIT3){ leds_on( LEDS_4); }
+  else{            leds_off( LEDS_4); }
+
+  //led 5
+  if(count & BIT4){ leds_on( LEDS_5); }
+  else{            leds_off( LEDS_5); }
+
+  //led 6
+  if(count & BIT5){ leds_on( LEDS_6); }
+  else{            leds_off( LEDS_6); }
+
+  //led 7
+  if(count & BIT6){ leds_on( LEDS_7); }
+  else{            leds_off( LEDS_7); }
+}
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(hello_world_process, ev, data)
 {
@@ -76,20 +88,13 @@ PROCESS_THREAD(hello_world_process, ev, data)
 
   printf("Start led test\n");
   leds_init();
-  SENSORS_ACTIVATE(button_sensor);
+  SENSORS_ACTIVATE(button_1_sensor);
 
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(ev == sensors_event &&
-			     data == &button_sensor);
-    printf("pass wait led %d\n",i);
-    display_leds(i);
-    i++;
-    if( i == 8){
-       i = 0;
-    }
-    printf("pass wait led %d\n",i);
+			     data == &button_1_sensor);
+    display_leds(count++);
   }
-  printf("End led test\n");
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/

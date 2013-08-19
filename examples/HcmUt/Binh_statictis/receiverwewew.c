@@ -48,7 +48,7 @@
 PROCESS(hello_world_process, "Hello world process");
 AUTOSTART_PROCESSES(&hello_world_process);
 /*---------------------------------------------------------------------------*/
-static char led_count = 0x55;
+static unsigned int NoReceivedPacket = 0;
 /*---------------------------------------------------------------------------*/
 void
 display_leds(int count)
@@ -72,22 +72,43 @@ display_leds(int count)
   //led 5
   if(count & BIT4){ leds_on( LEDS_5); }
   else{            leds_off( LEDS_5); }
-
-  //led 6
-  if(count & BIT5){ leds_on( LEDS_6); }
-  else{            leds_off( LEDS_6); }
-
-  //led 7
-  if(count & BIT6){ leds_on( LEDS_7); }
-  else{            leds_off( LEDS_7); }
+}
+/*---------------------------------------------------------------------------*/
+void 
+led_high(){
+   leds_on (LEDS_7);
+   leds_off(LEDS_6);
+}
+/*---------------------------------------------------------------------------*/
+void 
+led_low(){
+   leds_on (LEDS_6);
+   leds_off(LEDS_7);
 }
 /*---------------------------------------------------------------------------*/
 
 PROCESS_THREAD(hello_world_process, ev, data)
 {
   PROCESS_BEGIN();
+  SENSORS_ACTIVATE(button_1_sensor);
+  SENSORS_ACTIVATE(button_2_sensor);
+  SENSORS_ACTIVATE(button_3_sensor);
+  display_leds(led_count);
   while(1){
      printf("Hello, world[this device has contiki OS inside]\n");
+NoReceivedPacket = 0;
+     PROCESS_WAIT_EVENT_UNTIL(ev == sensors_event);
+     if(data == &button_1_sensor){
+        led_count ++;
+     }
+     else if(data == &button_2_sensor){
+     }
+     else if(data == &button_3_sensor){
+     }
+     display_leds(led_count);
+     //for(i = 0 ; i < 5; i ++){
+        clock_delay(6500);
+     //}
   }
   PROCESS_END();
 }

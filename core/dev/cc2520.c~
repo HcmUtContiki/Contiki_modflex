@@ -401,8 +401,7 @@ CC2520_SET_CC2591_TXMODE;
   strobe(CC2520_INS_STXON);
 #endif /* WITH_SEND_CCA */
   for(i = LOOP_20_SYMBOLS; i > 0; i--) {
-//    if(CC2520_SFD_IS_1) {
-    if(getreg(CC2520_FSMSTAT1) & BIT5) {
+    if(CC2520_SFD_IS_1) {
       {
         rtimer_clock_t sfd_timestamp;
         sfd_timestamp = TBCCR1;

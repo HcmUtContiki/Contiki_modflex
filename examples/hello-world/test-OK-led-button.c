@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Swedish Institute of Computer Science.
+ * Copyright (c) 2006, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,80 +28,85 @@
  *
  * This file is part of the Contiki operating system.
  *
+ * $Id: hello-world.c,v 1.1 2006/10/02 21:46:46 adamdunkels Exp $
+ */
+
+/**
+ * \file
+ *         A very simple Contiki application showing how Contiki programs look
+ * \author
+ *         Adam Dunkels <adam@sics.se>
  */
 
 #include "contiki.h"
-#include "lib/random.h"
-#include "sys/ctimer.h"
-#include "sys/etimer.h"
-#include "net/uip.h"
-#include "net/uip-ds6.h"
+#include <stdio.h> /* For printf() */
 #include "dev/leds.h"
-#include "simple-udp.h"
+#include "dev/button-sensor.h"
+#include "leds-arch.h"
 
-
-#include <stdio.h>
-#include <string.h>
-
-#define UDP_PORT 1234
-
-#define SEND_INTERVAL		(20 * CLOCK_SECOND)
-#define SEND_TIME		(random_rand() % (SEND_INTERVAL))
-
-static struct simple_udp_connection broadcast_connection;
-extern unsigned short node_id;
-static unsigned short sender_node_id = 0; 
 /*---------------------------------------------------------------------------*/
-PROCESS(broadcast_example_process, "UDP broadcast example process");
-AUTOSTART_PROCESSES(&broadcast_example_process);
+PROCESS(hello_world_process, "Hello world process");
+AUTOSTART_PROCESSES(&hello_world_process);
 /*---------------------------------------------------------------------------*/
-static void
-receiver(struct simple_udp_connection *c,
-         const uip_ipaddr_t *sender_addr,
-         uint16_t sender_port,
-         const uip_ipaddr_t *receiver_addr,
-         uint16_t receiver_port,
-         const uint8_t *data,
-         uint16_t datalen)
+static char led_count = 0x55;
+/*---------------------------------------------------------------------------*/
+void
+display_leds(int count)
 {
-  sender_node_id = data[0];
-  printf("send from [%u] to [%u]: Data received on port %d from port %d with" 
-	"length %d, data[%u]\n", sender_node_id, node_id, receiver_port, 
-		sender_port, datalen, sender_node_id);
-  leds_toggle(LEDS_RED);
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_1); }
+  else{            leds_off( LEDS_1); }
+
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
+
+  //led 4
+  if(count & BIT3){ leds_on( LEDS_4); }
+  else{            leds_off( LEDS_4); }
+
+  //led 5
+  if(count & BIT4){ leds_on( LEDS_5); }
+  else{            leds_off( LEDS_5); }
+
+  //led 6
+  if(count & BIT5){ leds_on( LEDS_6); }
+  else{            leds_off( LEDS_6); }
+
+  //led 7
+  if(count & BIT6){ leds_on( LEDS_7); }
+  else{            leds_off( LEDS_7); }
 }
 /*---------------------------------------------------------------------------*/
 
-unsigned short get_node_id()
+PROCESS_THREAD(hello_world_process, ev, data)
 {
-    return node_id;
-}
-/*---------------------------------------------------------------------------*/
-PROCESS_THREAD(broadcast_example_process, ev, data)
-{
-  //unsigned short temp = node_id + 65;
-  static struct etimer periodic_timer;
-  static struct etimer send_timer;
-  uip_ipaddr_t addr;
-
   PROCESS_BEGIN();
-  simple_udp_register(&broadcast_connection, UDP_PORT,
-                      NULL, UDP_PORT,
-                      receiver);
-  etimer_set(&periodic_timer, SEND_INTERVAL);
-  while(1) {
-      PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-      etimer_reset(&periodic_timer);
-      etimer_set(&send_timer, SEND_TIME);
-      PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&send_timer));
-      if(sender_node_id%5 + 1 == node_id){
-          leds_toggle(LEDS_GREEN);
-          printf("node_id[%d] Sending broadcast; reveiced[%d]\n", node_id, sender_node_id);  
-          uip_create_linklocal_allnodes_mcast(&addr);
-          simple_udp_sendto(&broadcast_connection, &node_id, 1, &addr);
+  SENSORS_ACTIVATE(button_1_sensor);
+  SENSORS_ACTIVATE(button_2_sensor);
+  SENSORS_ACTIVATE(button_3_sensor);
+  display_leds(led_count);
+  while(1){
+     printf("Hello, world[this device has contiki OS inside]\n");
+     PROCESS_WAIT_EVENT_UNTIL(ev == sensors_event);
+     if(data == &button_1_sensor){
+        led_count ++;
      }
+     else if(data == &button_2_sensor){
+        led_count --;
+     }
+     else if(data == &button_3_sensor){
+        led_count ^=0xFF;
+     }
+     display_leds(led_count);
+     //for(i = 0 ; i < 5; i ++){
+        clock_delay(6500);
+     //}
   }
-
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/

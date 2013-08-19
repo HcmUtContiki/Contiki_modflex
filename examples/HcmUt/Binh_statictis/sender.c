@@ -31,7 +31,7 @@
  * -----------------------------------------------------------------
  *
  * Author  : Adam Dunkels, Joakim Eriksson, Niclas Finne
- * Created : 2006-03-079
+ * Created : 2006-03-07
  * Updated : $Date: 2010/01/15 10:32:36 $
  *           $Revision: 1.6 $
  *
@@ -51,13 +51,13 @@
 #include "dev/cc2520.h"
 #include <stdio.h>
 #include <string.h>
-//#include "leds-arch.h"
+#include "leds-arch.h"
 PROCESS(radio_test_process, "Radio test");
 AUTOSTART_PROCESSES(&radio_test_process);
 
 #define ON  1
 #define OFF 0
-
+#define MAXPACKET 100
 #define HEADER "RTST"
 #define PACKET_SIZE 20
 #define PORT 9345
@@ -68,10 +68,8 @@ struct indicator {
   clock_time_t interval;
   struct etimer timer;
 };
-static char sendmessage[] = "0";
-static char count_message  = '0';
 static struct etimer send_timer;
-static struct indicator recv, other, flash;
+static struct indicator flash;
 
 /*---------------------------------------------------------------------*/
 static void
@@ -89,34 +87,34 @@ set(struct indicator *indicator, int onoff) {
   }
 }
 /*---------------------------------------------------------------------------*/
+static unsigned int NoPacket = 0;
+void
+leds_count(char count) 
+{
+  //led 1
+  if(count & BIT0){ leds_on( LEDS_1); }
+  else{            leds_off( LEDS_1); }
+
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
+
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
+
+  //led 4
+  if(count & BIT3){ leds_on( LEDS_4); }
+  else{            leds_off( LEDS_4); }
+
+  //led 5
+  if(count & BIT4){ leds_on( LEDS_5); }
+  else{            leds_off( LEDS_5); }
+}
+/*---------------------------------------------------------------------*/
 static void
 abc_recv(struct abc_conn *c)
 {
-  /* packet received */
-
-  if(packetbuf_datalen() < PACKET_SIZE){
-    printf("Receive invalid packet1 !!!! \n");
-  }else if( strncmp((char *)packetbuf_dataptr(), sendmessage, sizeof(sendmessage))) {
-//     || strncmp((char *)packetbuf_dataptr(), HEADER, sizeof(HEADER))) {
-    /* invalid message */
-    printf("Receive invalid packet2 !!!! \n");
-
-  } else {
-    printf("Receive valid packet with data [%s]!!!! \n", (char *)packetbuf_dataptr());
-    PROCESS_CONTEXT_BEGIN(&radio_test_process);
-    set(&recv, ON);
-    set(&other, ((char *)packetbuf_dataptr())[sizeof(sendmessage)] ? ON : OFF);
-
-    /* synchronize the sending to keep the nodes from sending
-       simultaneously */
-
-    etimer_set(&send_timer, CLOCK_SECOND);
-    etimer_adjust(&send_timer, - (int) (CLOCK_SECOND >> 1));
-
-
-
-    PROCESS_CONTEXT_END(&radio_test_process);
-  }
 }
 static const struct abc_callbacks abc_call = {abc_recv};
 static struct abc_conn abc;
@@ -124,52 +122,70 @@ static struct abc_conn abc;
 PROCESS_THREAD(radio_test_process, ev, data)
 {
   static uint8_t txpower;
+  static uint8_t txpower_idx = 4; 
+  static uint8_t txpower_arr[] = { 0x03, 0x2C, 0x88,
+                                   0x81, 0x32, 0x13,
+                                   0xAB, 0xF2, 0xF7};
+/*
+	  0x03 -> -18 dBm
+	  0x2C -> -7 dBm
+	  0x88 -> -4 dBm
+	  0x81 -> -2 dBm
+	  0x32 -> 0 dBm
+	  0x13 -> 1 dBm
+	  0xAB -> 2 dBm
+	  0xF2 -> 3 dBm
+	  0xF7 -> 5 dBm
+*/
   PROCESS_BEGIN();
 
-  txpower = CC2520_TXPOWER_MAX;
 
   /* Initialize the indicators */
-  recv.onoff = other.onoff = flash.onoff = OFF;
-  recv.interval = other.interval = CLOCK_SECOND;
   flash.interval = 1;
-  flash.led = LEDS_GREEN;
-  recv.led = LEDS_RED;
-  other.led = LEDS_YELLOW;
-
+  flash.led = LEDS_6;
+  
   abc_open(&abc, PORT, &abc_call);
   etimer_set(&send_timer, CLOCK_SECOND);
-  SENSORS_ACTIVATE(button_sensor);
-
+  SENSORS_ACTIVATE(button_1_sensor);
+  SENSORS_ACTIVATE(button_2_sensor);
+  SENSORS_ACTIVATE(button_3_sensor);
+  leds_count(txpower_idx + 1) ;
+  NoPacket = 0;
   while(1) {
     PROCESS_WAIT_EVENT();
     if (ev == PROCESS_EVENT_TIMER) {
-        if(data == &send_timer) {
-	        etimer_reset(&send_timer);
-            /* send packet */
-//            sendmessage[0] = count_message ++; 
-            sendmessage[0]++; 
-	        packetbuf_copyfrom(sendmessage, sizeof(sendmessage));
-	        ((char *)packetbuf_dataptr())[sizeof(sendmessage)] = recv.onoff;
-	        /* send arbitrary data to fill the packet size */
-	        packetbuf_set_datalen(PACKET_SIZE);
-	        set(&flash, ON);
-	        abc_send(&abc);
-        } else if(data == &other.timer) {
-	        set(&other, OFF);
-        } else if(data == &recv.timer) {
-	        set(&recv, OFF);
-        } else if(data == &flash.timer) {
-	        set(&flash, OFF);
-        }
-    }else if(ev == sensors_event && data == &button_sensor) {
-        if(txpower > 5) {
-	        txpower -= 5;
-        } else {
-	        txpower = CC2520_TXPOWER_MAX;
-	        leds_blink();
-        }
-        cc2520_set_txpower(txpower);
-        printf("txpower set to %u\n", txpower);
+       if(data == &send_timer) {
+          if(NoPacket == MAXPACKET){
+             leds_on(LEDS_7);
+          }else{
+             etimer_reset(&send_timer);
+             NoPacket ++;
+          }
+          packetbuf_copyfrom(HEADER, sizeof(HEADER));
+          ((char *)packetbuf_dataptr())[sizeof(HEADER)] = OFF;
+          /* send arbitrary data to fill the packet size */
+          packetbuf_set_datalen(PACKET_SIZE);
+          set(&flash, ON);
+          abc_send(&abc);
+       }else if(data == &flash.timer){
+          set(&flash, OFF);
+       }
+    }
+    if(ev == sensors_event){
+       if(data == &button_1_sensor){
+          etimer_set(&send_timer, CLOCK_SECOND);
+          leds_off(LEDS_7);
+          NoPacket =0;
+       } else if(data == &button_2_sensor){
+          txpower_idx ++;
+          if(txpower_idx > 8) {txpower_idx = 0;}
+       } else if(data == &button_3_sensor){
+          txpower_idx --;
+          if(txpower_idx > 8) {txpower_idx = 8;}
+       }
+       leds_count(txpower_idx + 1) ;
+       txpower = txpower_arr[txpower_idx];
+       cc2520_set_txpower(txpower) ;
     }
   }
   PROCESS_END();
