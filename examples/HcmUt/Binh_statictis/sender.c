@@ -57,8 +57,11 @@ AUTOSTART_PROCESSES(&radio_test_process);
 
 #define ON  1
 #define OFF 0
-#define MAXPACKET 100
-#define HEADER "RTST"
+#define MAXPACKET 1000
+#define SENDTIMER CLOCK_SECOND/8
+
+#define HEADER "RT"
+/* Header = RT, R mean reset, T mean power*/
 #define PACKET_SIZE 20
 #define PORT 9345
 
@@ -70,6 +73,22 @@ struct indicator {
 };
 static struct etimer send_timer;
 static struct indicator flash;
+static uint8_t txpower;
+static uint8_t txpower_idx = 4; 
+static uint8_t txpower_arr[] = { 0x03, 0x2C, 0x88,
+                                 0x81, 0x32, 0x13,
+                                 0xAB, 0xF2, 0xF7};
+/*
+	  0x03 -> -18 dBm
+	  0x2C -> -7 dBm
+	  0x88 -> -4 dBm
+	  0x81 -> -2 dBm
+	  0x32 -> 0 dBm
+	  0x13 -> 1 dBm
+	  0xAB -> 2 dBm
+	  0xF2 -> 3 dBm
+	  0xF7 -> 5 dBm
+*/
 
 /*---------------------------------------------------------------------*/
 static void
@@ -92,62 +111,64 @@ void
 leds_count(char count) 
 {
   //led 1
-  if(count & BIT0){ leds_on( LEDS_1); }
-  else{            leds_off( LEDS_1); }
+  if(count & BIT0){ leds_on( LEDS_0); }
+  else{            leds_off( LEDS_0); }
 
   //led 2
-  if(count & BIT1){ leds_on( LEDS_2); }
-  else{            leds_off( LEDS_2); }
+  if(count & BIT1){ leds_on( LEDS_1); }
+  else{            leds_off( LEDS_1); }
 
   //led 3
-  if(count & BIT2){ leds_on( LEDS_3); }
-  else{            leds_off( LEDS_3); }
+  if(count & BIT2){ leds_on( LEDS_2); }
+  else{            leds_off( LEDS_2); }
 
   //led 4
-  if(count & BIT3){ leds_on( LEDS_4); }
-  else{            leds_off( LEDS_4); }
+  if(count & BIT3){ leds_on( LEDS_3); }
+  else{            leds_off( LEDS_3); }
 
   //led 5
-  if(count & BIT4){ leds_on( LEDS_5); }
-  else{            leds_off( LEDS_5); }
+  if(count & BIT4){ leds_on( LEDS_4); }
+  else{            leds_off( LEDS_4); }
 }
 /*---------------------------------------------------------------------*/
+static char received_message[2];
 static void
 abc_recv(struct abc_conn *c)
 {
+  if(packetbuf_datalen() < PACKET_SIZE){
+    printf("Receive invalid packet !!!! \n");
+  } else {
+    PROCESS_CONTEXT_BEGIN(&radio_test_process);
+    strncpy(received_message, (char *)packetbuf_dataptr(), 2);
+    if(received_message[0] == 'R' ){
+//       if( received_message[1] >= 0 && received_message[1] <= 8){
+//          txpower_idx = received_message[1];
+//          leds_count(txpower_idx + 1) ;
+//          txpower = txpower_arr[txpower_idx];
+//          cc2520_set_txpower(txpower) ;          
+          leds_off(LEDS_7);
+          clock_delay(65000);
+          NoPacket = 0; 
+          etimer_set(&send_timer, SENDTIMER);
+//       }
+    }
+    PROCESS_CONTEXT_END(&radio_test_process);
+  }
 }
 static const struct abc_callbacks abc_call = {abc_recv};
 static struct abc_conn abc;
 /*---------------------------------------------------------------------*/
 PROCESS_THREAD(radio_test_process, ev, data)
 {
-  static uint8_t txpower;
-  static uint8_t txpower_idx = 4; 
-  static uint8_t txpower_arr[] = { 0x03, 0x2C, 0x88,
-                                   0x81, 0x32, 0x13,
-                                   0xAB, 0xF2, 0xF7};
-/*
-	  0x03 -> -18 dBm
-	  0x2C -> -7 dBm
-	  0x88 -> -4 dBm
-	  0x81 -> -2 dBm
-	  0x32 -> 0 dBm
-	  0x13 -> 1 dBm
-	  0xAB -> 2 dBm
-	  0xF2 -> 3 dBm
-	  0xF7 -> 5 dBm
-*/
   PROCESS_BEGIN();
-
-
   /* Initialize the indicators */
   flash.interval = 1;
   flash.led = LEDS_6;
   
   abc_open(&abc, PORT, &abc_call);
-  etimer_set(&send_timer, CLOCK_SECOND);
-  SENSORS_ACTIVATE(button_1_sensor);
-  SENSORS_ACTIVATE(button_2_sensor);
+//  etimer_set(&send_timer, SENDTIMER);
+//  SENSORS_ACTIVATE(button_1_sensor);
+//  SENSORS_ACTIVATE(button_2_sensor);
   SENSORS_ACTIVATE(button_3_sensor);
   leds_count(txpower_idx + 1) ;
   NoPacket = 0;
@@ -156,37 +177,44 @@ PROCESS_THREAD(radio_test_process, ev, data)
     if (ev == PROCESS_EVENT_TIMER) {
        if(data == &send_timer) {
           if(NoPacket == MAXPACKET){
-             leds_on(LEDS_7);
+             leds_on (LEDS_7);
           }else{
              etimer_reset(&send_timer);
              NoPacket ++;
+             packetbuf_copyfrom(HEADER, sizeof(HEADER));
+             ((char *)packetbuf_dataptr())[sizeof(HEADER)] = OFF;
+             /* send arbitrary data to fill the packet size */
+             packetbuf_set_datalen(PACKET_SIZE);
+             set(&flash, ON);
+             abc_send(&abc);
           }
-          packetbuf_copyfrom(HEADER, sizeof(HEADER));
-          ((char *)packetbuf_dataptr())[sizeof(HEADER)] = OFF;
-          /* send arbitrary data to fill the packet size */
-          packetbuf_set_datalen(PACKET_SIZE);
-          set(&flash, ON);
-          abc_send(&abc);
        }else if(data == &flash.timer){
           set(&flash, OFF);
        }
     }
+
     if(ev == sensors_event){
        if(data == &button_1_sensor){
-          etimer_set(&send_timer, CLOCK_SECOND);
-          leds_off(LEDS_7);
-          NoPacket =0;
-       } else if(data == &button_2_sensor){
           txpower_idx ++;
           if(txpower_idx > 8) {txpower_idx = 0;}
+          leds_count(txpower_idx + 1) ;
+          txpower = txpower_arr[txpower_idx];
+          cc2520_set_txpower(txpower) ;
+       }
+/*       } else if(data == &button_2_sensor){
+          txpower_idx ++;
+          if(txpower_idx > 8) {txpower_idx = 0;}
+
        } else if(data == &button_3_sensor){
           txpower_idx --;
           if(txpower_idx > 8) {txpower_idx = 8;}
+          leds_count(txpower_idx + 1) ;
+          txpower = txpower_arr[txpower_idx];
+          cc2520_set_txpower(txpower) ;
        }
-       leds_count(txpower_idx + 1) ;
-       txpower = txpower_arr[txpower_idx];
-       cc2520_set_txpower(txpower) ;
+*/      
     }
+
   }
   PROCESS_END();
 }
