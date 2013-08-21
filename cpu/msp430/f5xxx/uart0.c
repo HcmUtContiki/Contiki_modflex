@@ -83,9 +83,9 @@ uart0_init(unsigned long ubr)
   UCA0BR0 = ubr & 0xff;
   UCA0BR1 = (ubr >> 8) & 0xff;
   UCA0MCTL = UCBRS_3;             /* Modulation UCBRSx = 3 */
-  P3DIR &= ~0x20;                 /* P3.5 = USCI_A0 RXD as input */
-  P3DIR |= 0x10;                  /* P3.4 = USCI_A0 TXD as output */
-  P3SEL |= 0x30;                  /* P3.4,5 = USCI_A0 TXD/RXD */
+  P3DIR &= ~BIT5;                 /* P3.5 = USCI_A0 RXD as input */
+  P3DIR |=  BIT4;                  /* P3.4 = USCI_A0 TXD as output */
+  P3SEL |=  BIT4 + BIT5;                  /* P3.4,5 = USCI_A0 TXD/RXD */
 
   /*UCA0CTL1 &= ~UCSWRST;*/       /* Initialize USCI state machine */
 

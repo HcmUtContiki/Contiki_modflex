@@ -48,137 +48,62 @@
 #include "net/rime.h"
 #include "dev/leds.h"
 #include "dev/button-sensor.h"
-#include "dev/cc2520.h"
+#include "dev/serial-line.h"
+//#include "dev/cc2520.h"
 #include <stdio.h>
 #include <string.h>
 #include "leds-arch.h"
 PROCESS(radio_test_process, "Radio test");
 AUTOSTART_PROCESSES(&radio_test_process);
-
-#define ON  1
-#define OFF 0
-static char charmessage[] = "R ";
-#define HEADER "RTST"
-#define PACKET_SIZE 20
-#define PORT 9345
-
-struct indicator {
-  int onoff;
-  int led;
-  clock_time_t interval;
-  struct etimer timer;
-};
-/*---------------------------------------------------------------------*/
-//static char count = 0;
-static unsigned int NoReceivedPacket = 0;
 /*---------------------------------------------------------------------------*/
 void
-display_leds(int count)
+leds_count(char count) 
 {
   //led 1
-  if(count & BIT2){ leds_on( LEDS_0); }
-  else{            leds_off( LEDS_0); }
-
-  //led 2
-  if(count & BIT3){ leds_on( LEDS_1); }
+  if(count & BIT0){ leds_on( LEDS_1); }
   else{            leds_off( LEDS_1); }
 
-  //led 3
-  if(count & BIT4){ leds_on( LEDS_2); }
+  //led 2
+  if(count & BIT1){ leds_on( LEDS_2); }
   else{            leds_off( LEDS_2); }
 
-  //led 4
-  if(count & BIT5){ leds_on( LEDS_3); }
+  //led 3
+  if(count & BIT2){ leds_on( LEDS_3); }
   else{            leds_off( LEDS_3); }
 
-  //led 5
-  if(count & BIT6){ leds_on( LEDS_4); }
+  //led 4
+  if(count & BIT3){ leds_on( LEDS_4); }
   else{            leds_off( LEDS_4); }
 
   //led 5
-  if(count & BIT7){ leds_on( LEDS_5); }
+  if(count & BIT4){ leds_on( LEDS_5); }
   else{            leds_off( LEDS_5); }
 
-  //led 6
-  if(count & BIT8){ leds_on( LEDS_6); }
+  //led 5
+  if(count & BIT5){ leds_on( LEDS_6); }
   else{            leds_off( LEDS_6); }
 
-  //led 7
-  if(count & BIT9){ leds_on( LEDS_7); }
+  //led 5
+  if(count & BIT6){ leds_on( LEDS_7); }
   else{            leds_off( LEDS_7); }
 }
-/*---------------------------------------------------------------------------*/
-void 
-led_high(){
-   leds_on (LEDS_7);
-   leds_off(LEDS_6);
-}
-/*---------------------------------------------------------------------------*/
-void 
-led_low(){
-   leds_on (LEDS_6);
-   leds_off(LEDS_7);
-}
-/*---------------------------------------------------------------------------*/
 
-static void
-abc_recv(struct abc_conn *c)
-{
-  /* packet received */
-
-  if(packetbuf_datalen() < PACKET_SIZE){
-    // || strncmp((char *)packetbuf_dataptr(), HEADER, sizeof(HEADER))) {
-    /* invalid message */
-    printf("Receive invalid packet !!!! \n");
-
-  } else {
-     NoReceivedPacket++;
-     display_leds(NoReceivedPacket);
-  }
-}
-static const struct abc_callbacks abc_call = {abc_recv};
-static struct abc_conn abc;
 /*---------------------------------------------------------------------*/
 PROCESS_THREAD(radio_test_process, ev, data)
 {
-  static uint8_t txpower_idx = 4;
-//  static char resetcount = 0;
-
+  static uint8_t txpower;
   PROCESS_BEGIN();
-  abc_open(&abc, PORT, &abc_call);
   SENSORS_ACTIVATE(button_1_sensor);
-//  SENSORS_ACTIVATE(button_2_sensor);
-//  SENSORS_ACTIVATE(button_3_sensor);
-  NoReceivedPacket = 0;
   while(1) {
-    PROCESS_WAIT_EVENT();
-
-    if(ev == sensors_event){
-       if(data == &button_1_sensor){
-          NoReceivedPacket = 0;
-          charmessage[1] = txpower_idx;
-          packetbuf_copyfrom(charmessage, sizeof(charmessage));
-          ((char *)packetbuf_dataptr())[sizeof(charmessage)] =OFF;
-
-          /* send arbitrary data to fill the packet size */
-
-          packetbuf_set_datalen(PACKET_SIZE);
-          abc_send(&abc);
-       } 
-/*
-       else if(data == &button_2_sensor){
-          txpower_idx ++;
-          if(txpower_idx > 8) {txpower_idx = 0;}
-       } else if(data == &button_3_sensor){
-          txpower_idx --;
-          if(txpower_idx > 8) {txpower_idx = 8;}
-       }
-       display_leds(txpower_idx + 1);
-*/
-    }
-
+     //PROCESS_WAIT_EVENT_UNTIL(ev == sensors_event);
+     PROCESS_WAIT_EVENT_UNTIL(ev == serial_line_event_message);
+     //if(data == &button_1_sensor){
+     //putchar(55);
+     printf("%s\n", (char *)data);
+   
+     leds_count(txpower++) ;
+     //}
   }
-
   PROCESS_END();
 }
 /*---------------------------------------------------------------------*/
