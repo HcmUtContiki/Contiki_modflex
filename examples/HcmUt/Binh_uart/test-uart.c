@@ -59,50 +59,53 @@ AUTOSTART_PROCESSES(&radio_test_process);
 void
 leds_count(char count) 
 {
+  //led 0
+  if(count & BIT0){ leds_on( LEDS_0); }
+  else{            leds_off( LEDS_0); }
+
   //led 1
-  if(count & BIT0){ leds_on( LEDS_1); }
+  if(count & BIT1){ leds_on( LEDS_1); }
   else{            leds_off( LEDS_1); }
 
   //led 2
-  if(count & BIT1){ leds_on( LEDS_2); }
+  if(count & BIT2){ leds_on( LEDS_2); }
   else{            leds_off( LEDS_2); }
 
   //led 3
-  if(count & BIT2){ leds_on( LEDS_3); }
+  if(count & BIT3){ leds_on( LEDS_3); }
   else{            leds_off( LEDS_3); }
 
   //led 4
-  if(count & BIT3){ leds_on( LEDS_4); }
+  if(count & BIT4){ leds_on( LEDS_4); }
   else{            leds_off( LEDS_4); }
 
   //led 5
-  if(count & BIT4){ leds_on( LEDS_5); }
+  if(count & BIT5){ leds_on( LEDS_5); }
   else{            leds_off( LEDS_5); }
 
-  //led 5
-  if(count & BIT5){ leds_on( LEDS_6); }
+  //led 6
+  if(count & BIT6){ leds_on( LEDS_6); }
   else{            leds_off( LEDS_6); }
-
-  //led 5
-  if(count & BIT6){ leds_on( LEDS_7); }
+  //led 7
+  if(count & BIT7){ leds_on( LEDS_7); }
   else{            leds_off( LEDS_7); }
 }
 
 /*---------------------------------------------------------------------*/
 PROCESS_THREAD(radio_test_process, ev, data)
 {
-  static uint8_t txpower;
+  static uint8_t txpower = 0x55;
   PROCESS_BEGIN();
   SENSORS_ACTIVATE(button_1_sensor);
+  leds_count(txpower) ;
   while(1) {
-     //PROCESS_WAIT_EVENT_UNTIL(ev == sensors_event);
-     PROCESS_WAIT_EVENT_UNTIL(ev == serial_line_event_message);
-     //if(data == &button_1_sensor){
-     //putchar(55);
-     printf("%s\n", (char *)data);
-   
-     leds_count(txpower++) ;
-     //}
+//     PROCESS_WAIT_EVENT_UNTIL(ev == sensors_event);
+//     if(data == &button_1_sensor){
+//        printf("CONTIKI[%d]",txpower);
+//        leds_count(txpower++) ;
+//     }else {
+//        leds_count(txpower--) ;
+//     }
   }
   PROCESS_END();
 }

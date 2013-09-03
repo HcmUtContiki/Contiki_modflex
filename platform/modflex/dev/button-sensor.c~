@@ -45,10 +45,13 @@ HWCONF_PIN(BUTTON_1, 2, 0);
 HWCONF_IRQ(BUTTON_1, 2, 0);
 HWCONF_PIN(BUTTON_2, 2, 1);
 HWCONF_IRQ(BUTTON_2, 2, 1);
-HWCONF_PIN(BUTTON_3, 2, 2);
-HWCONF_IRQ(BUTTON_3, 2, 2);
+//HWCONF_PIN(BUTTON_3, 2, 2);
+//HWCONF_IRQ(BUTTON_3, 2, 2);
+HWCONF_PIN(BUTTON_3, 4, 4);
+//HWCONF_IRQ(BUTTON_3, 4, 4);
+
 /*---------------------------------------------------------------------------*/
-ISR(PORT2, irq_p2dasdasdsa)
+ISR(PORT2, irq_p2)
 {
   ENERGEST_ON(ENERGEST_TYPE_IRQ);
 
@@ -65,15 +68,29 @@ ISR(PORT2, irq_p2dasdasdsa)
     LPM4_EXIT;
     P2IFG &= ~BIT1;
   }
-
+/*
   if(BUTTON_3_CHECK_IRQ() && timer_expired(&debouncetimer[2])) {
     timer_set(&debouncetimer[2], CLOCK_SECOND / 4);
     sensors_changed(&button_3_sensor);
     LPM4_EXIT;
     P2IFG &= ~BIT2;
   }
-
+*/
   ENERGEST_OFF(ENERGEST_TYPE_IRQ);
+}
+/*---------------------------------------------------------------------------*/
+ISR(TIMERB1, button3)
+{
+   int tbiv;
+   ENERGEST_ON(ENERGEST_TYPE_IRQ);
+
+   if(timer_expired(&debouncetimer[2])) {
+      timer_set(&debouncetimer[2], CLOCK_SECOND / 4);
+      sensors_changed(&button_3_sensor);
+      tbiv = TBIV;
+      LPM4_EXIT;
+   }
+   ENERGEST_OFF(ENERGEST_TYPE_IRQ);
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -160,6 +177,51 @@ status_2(int type)
   }
 }
 /*---------------------------------------------------------------------------*/
+//static int
+//value_3(int type)
+//{
+//  return BUTTON_3_READ() || !timer_expired(&debouncetimer[2]);
+//}
+/*---------------------------------------------------------------------------*/
+
+//static int
+//configure_3(int type, int value)
+//{
+//  if(type == SENSORS_ACTIVE) {
+//    if(value == 0) {
+//      /* Deactivate button sensor */
+//      BUTTON_3_DISABLE_IRQ();
+//    } else {
+//      /* Activate button sensor */
+//      if(!status_3(SENSORS_ACTIVE)) {
+//	timer_set(&debouncetimer[2], 0);
+//	BUTTON_3_IRQ_EDGE_SELECTD();
+//
+//	BUTTON_3_SELECT();
+//	BUTTON_3_MAKE_INPUT();
+//
+//	BUTTON_3_ENABLE_IRQ();
+//     }
+//    }
+//    return 1;
+//  }
+//  return 0;
+//}
+/*---------------------------------------------------------------------------*/
+/*
+static int
+status_3(int type)
+{
+  switch(type) {
+  case SENSORS_ACTIVE:
+  case SENSORS_READY:
+    return BUTTON_3_IRQ_ENABLED();
+  default:
+    return 0;
+  }
+}
+*/
+/*---------------------------------------------------------------------------*/
 static int
 value_3(int type)
 {
@@ -172,17 +234,27 @@ configure_3(int type, int value)
   if(type == SENSORS_ACTIVE) {
     if(value == 0) {
       /* Deactivate button sensor */
-      BUTTON_3_DISABLE_IRQ();
+//      BUTTON_3_DISABLE_IRQ();
     } else {
       /* Activate button sensor */
       if(!status_3(SENSORS_ACTIVE)) {
 	timer_set(&debouncetimer[2], 0);
-	BUTTON_3_IRQ_EDGE_SELECTD();
+//	BUTTON_3_IRQ_EDGE_SELECTD();
 
 	BUTTON_3_SELECT();
 	BUTTON_3_MAKE_INPUT();
+        /* start timer B - 32768 ticks per second */
+        TBCTL = TBSSEL_1 | TBCLR;
 
-	BUTTON_3_ENABLE_IRQ();
+        /* CM_3 = capture mode - capture on both edges */
+        TBCCTL1 = CM_3 | CAP | SCS;
+        TBCCTL1 |= CCIE;
+  
+        /* Start Timer_B in continuous mode. */
+        TBCTL |= MC1;
+
+        TBR = RTIMER_NOW();
+//	BUTTON_3_ENABLE_IRQ();
       }
     }
     return 1;
@@ -190,17 +262,20 @@ configure_3(int type, int value)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
+
 static int
 status_3(int type)
 {
   switch(type) {
   case SENSORS_ACTIVE:
   case SENSORS_READY:
-    return BUTTON_3_IRQ_ENABLED();
+    return 1;
+//    return BUTTON_3_IRQ_ENABLED();
   default:
     return 0;
   }
 }
+
 /*---------------------------------------------------------------------------*/
 SENSORS_SENSOR(button_1_sensor, BUTTON_1_SENSOR, value_1, configure_1, status_1);
 SENSORS_SENSOR(button_2_sensor, BUTTON_2_SENSOR, value_2, configure_2, status_2);
