@@ -56,13 +56,4 @@
 #ifndef LEDS_4
 #define LEDS_4  BIT4
 #endif /* LEDS_4 */
-#ifndef LEDS_5
-#define LEDS_5  BIT5
-#endif /* LEDS_5 */
-#ifndef LEDS_6
-#define LEDS_6  BIT6
-#endif /* LEDS_6 */
-#ifndef LEDS_7
-#define LEDS_7  BIT7
-#endif /* LEDS_7 */
 /*---------------------------------------------------------------------------*/
