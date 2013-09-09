@@ -1,4 +1,8 @@
-CONTIKI_PROJECT = test-radio-data-light-button
+ifndef TARGET
+TARGET=modflex
+endif
+
+CONTIKI_PROJECT = test-uart.hex
 all: $(CONTIKI_PROJECT)
 
 #UIP_CONF_IPV6=1
