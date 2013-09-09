@@ -47,6 +47,8 @@
 
 void uart0_set_input(int (*input)(unsigned char c));
 void uart0_writeb(unsigned char c);
+void uart0_writeString(char *str);
+void uart0_writeNumber(unsigned int num);
 void uart0_init(unsigned long ubr);
 uint8_t uart0_active(void);
 

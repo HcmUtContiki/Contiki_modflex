@@ -34,6 +34,7 @@
  */
 
 #include "contiki.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include "sys/energest.h"
 #include "dev/uart0.h"
@@ -60,12 +61,30 @@ uart0_set_input(int (*input)(unsigned char c))
 void
 uart0_writeb(unsigned char c)
 {
-  watchdog_periodic();
+  // watchdog_periodic();
   /* Loop until the transmission buffer is available. */
   while((UCA0STAT & UCBUSY));
 
   /* Transmit the data. */
   UCA0TXBUF = c;
+}
+/*---------------------------------------------------------------------------*/
+void
+uart0_writeString(char *str)
+{
+  while (*str != '\0')
+  {
+    uart0_writeb((unsigned char) *str);
+    str++;
+  }
+}
+/*---------------------------------------------------------------------------*/
+void
+uart0_writeNumber(unsigned int num)
+{
+  char buffer[10];
+  itoa(num, buffer, 10);
+  uart0_writeString(buffer);
 }
 /*---------------------------------------------------------------------------*/
 /**
@@ -83,9 +102,9 @@ uart0_init(unsigned long ubr)
   UCA0BR0 = ubr & 0xff;
   UCA0BR1 = (ubr >> 8) & 0xff;
   UCA0MCTL = UCBRS_3;             /* Modulation UCBRSx = 3 */
-  P3DIR &= ~BIT5;                 /* P3.5 = USCI_A0 RXD as input */
-  P3DIR |=  BIT4;                  /* P3.4 = USCI_A0 TXD as output */
-  P3SEL |=  BIT4 + BIT5;                  /* P3.4,5 = USCI_A0 TXD/RXD */
+  P3DIR &= ~0x20;                 /* P3.5 = USCI_A0 RXD as input */
+  P3DIR |= 0x10;                  /* P3.4 = USCI_A0 TXD as output */
+  P3SEL |= 0x30;                  /* P3.4,5 = USCI_A0 TXD/RXD */
 
   /*UCA0CTL1 &= ~UCSWRST;*/       /* Initialize USCI state machine */
 
