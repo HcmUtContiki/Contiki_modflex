@@ -39,54 +39,55 @@
  */
 
 #include "contiki.h"
-#include <stdio.h>               /* For printf() */
-#include <stdint.h>              /* For typedef */
+#include <stdio.h> /* For printf() */
 #include "dev/leds.h"
 #include "dev/button-sensor.h"
 #include "leds-arch.h"
-#include "sys/clock.h"
-#include "dev/uart0.h"
-#include "dev/fram.h"
 
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "Hello world process");
-PROCESS(test_receive_process, "Testing receive data");
-PROCESS(test_spi, "Testing SPI");
-AUTOSTART_PROCESSES(&hello_world_process, &test_receive_process, &test_spi);
-
+AUTOSTART_PROCESSES(&hello_world_process);
 /*---------------------------------------------------------------------------*/
-static char led_count = 0x55;
+static int  i         = 0;
+static char led_count = 0x0F;
 /*---------------------------------------------------------------------------*/
 void
 display_leds(int count)
 {
   //led 1
-  if(count & BIT0){ leds_on( LEDS_1); }
-  else{            leds_off( LEDS_1); }
+  i = count;
+  if(i % 2  == 1){ leds_on(    LEDS_1); }
+  else{            leds_off(   LEDS_1); }
 
   //led 2
-  if(count & BIT1){ leds_on( LEDS_2); }
-  else{            leds_off( LEDS_2); }
+  i = count/0x02;
+  if(i % 2  == 1){ leds_on(    LEDS_2); }
+  else{            leds_off(   LEDS_2); }
 
   //led 3
-  if(count & BIT2){ leds_on( LEDS_3); }
-  else{            leds_off( LEDS_3); }
+  i = count/0x04;
+  if(i % 2  == 1){ leds_on(    LEDS_3); }
+  else{            leds_off(   LEDS_3); }
 
-  //led 4
-  if(count & BIT3){ leds_on( LEDS_4); }
-  else{            leds_off( LEDS_4); }
+  //led 3
+  i = count/0x08;
+  if(i % 2  == 1){ leds_on(    LEDS_4); }
+  else{            leds_off(   LEDS_4); }
 
-  //led 5
-  if(count & BIT4){ leds_on( LEDS_5); }
-  else{            leds_off( LEDS_5); }
+  //led 3
+  i = count/0x10;
+  if(i % 2  == 1){ leds_on(    LEDS_5); }
+  else{            leds_off(   LEDS_5); }
 
-  //led 6
-  if(count & BIT5){ leds_on( LEDS_6); }
-  else{            leds_off( LEDS_6); }
+  //led 3
+  i = count/0x20;
+  if(i % 2  == 1){ leds_on(    LEDS_6); }
+  else{            leds_off(   LEDS_6); }
 
-  //led 7
-  if(count & BIT6){ leds_on( LEDS_7); }
-  else{            leds_off( LEDS_7); }
+  //led 3
+  i = count/0x40;
+  if(i % 2  == 1){ leds_on(    LEDS_7); }
+  else{            leds_off(   LEDS_7); }
 }
 /*---------------------------------------------------------------------------*/
 
@@ -107,64 +108,13 @@ PROCESS_THREAD(hello_world_process, ev, data)
         led_count --;
      }
      else if(data == &button_3_sensor){
-        led_count ^=0xFF;
+        P4OUT ^=0xFF;
      }
-     //display_leds(led_count);
-
-     clock_delay(6500);
-
+     display_leds(led_count);
+     //for(i = 0 ; i < 5; i ++){
+     //   clock_delay(65000);
+     //}
   }
-  PROCESS_END();
-}
-/*---------------------------------------------------------------------------*/
-
-int uart_rx_callback(unsigned char c)
-{
-  uart0_writeString("Key pressed: ");
-  uart0_writeb(c);
-  uart0_writeString("\r\n");
-  return 1;
-}
-/*---------------------------------------------------------------------------*/
-
-PROCESS_THREAD(test_receive_process, ev, data)
-{
-
-  PROCESS_BEGIN();
-
-  uart0_set_input(uart_rx_callback);
-
-  while(1)
-  {
-   PROCESS_YIELD();
-  }
-
-  PROCESS_END();
-}
-/*---------------------------------------------------------------------------*/
-
-PROCESS_THREAD(test_spi, ev, data)
-{
-  PROCESS_BEGIN();
-
-
-
-  //display_leds(0x0F);
-
-  while(1)
-  {
-      uart0_writeString("SPI Testing\r\n");
-      uart0_writeString("Read Device ID:\r\n");
-      uint8_t id[4];
-      fram_readDeviceID((uint8_t *)id);
-
-      uart0_writeString("Manufacturer ID  :  ");uart0_writeNumber(id[0]);uart0_writeString("\r\n");
-      uart0_writeString("Continuation code:  ");uart0_writeNumber(id[1]);uart0_writeString("\r\n");
-      uart0_writeString("Product ID (1st) :  ");uart0_writeNumber(id[2]);uart0_writeString("\r\n");
-      uart0_writeString("Product ID (2nd) :  ");uart0_writeNumber(id[3]);uart0_writeString("\r\n");
-    PROCESS_YIELD();
-  }
-
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/

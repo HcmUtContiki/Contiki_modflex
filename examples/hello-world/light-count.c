@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Swedish Institute of Computer Science.
+ * Copyright (c) 2006, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,78 +28,69 @@
  *
  * This file is part of the Contiki operating system.
  *
+ * $Id: hello-world.c,v 1.1 2006/10/02 21:46:46 adamdunkels Exp $
  */
 
 /**
  * \file
- *         Leds arch specific file for the WiSMote platform
+ *         A very simple Contiki application showing how Contiki programs look
  * \author
- *         Niclas Finne <nfi@sics.se>
- *         Joakim Eriksson <joakime@sics.se>
+ *         Adam Dunkels <adam@sics.se>
  */
 
 #include "contiki.h"
-#include "dev/leds.h"
-#include "leds-arch.h"
+
+#include <stdio.h> /* For printf() */
+#include "dev/leds.h"		/*for led test*/
+#include "dev/button-sensor.h"
+//#include "dev/light-sensor.h"
+/*---------------------------------------------------------------------------*/
+PROCESS(hello_world_process, "Hello world process");
+AUTOSTART_PROCESSES(&hello_world_process);
+static int i = 0;
 /*---------------------------------------------------------------------------*/
 void
-leds_arch_init(void)
+display_leds(int count)
 {
-//  P4DIR |= (BIT6 + BIT5 + BIT5);
-//  P4OUT |= (BIT4 + BIT6 + BIT5);
-    P4DIR |= 0xFF;
-    P4OUT |= 0xFF;
+  //led 1
+  i = count;
+  if(i % 2  == 1){ leds_on(    LEDS_GREEN); }
+  else{            leds_off(   LEDS_GREEN); }
+
+  //led 2
+  i = count/2;
+  if(i % 2  == 1){ leds_on(    LEDS_YELLOW); }
+  else{            leds_off(   LEDS_YELLOW); }
+
+  //led 3
+  i = count/4;
+  if(i % 2  == 1){ leds_on(    LEDS_RED); }
+  else{            leds_off(   LEDS_RED); }
+}
+
+/*---------------------------------------------------------------------------*/
+PROCESS_THREAD(hello_world_process, ev, data)
+{
+
+  PROCESS_BEGIN();
+
+  printf("Start led test\n");
+  leds_init();
+  SENSORS_ACTIVATE(button_sensor);
+
+  while(1) {
+    PROCESS_WAIT_EVENT_UNTIL(ev == sensors_event &&
+			     data == &button_sensor);
+    printf("pass wait led %d\n",i);
+    display_leds(i);
+    i++;
+    if( i == 8){
+       i = 0;
+    }
+    printf("pass wait led %d\n",i);
+  }
+  printf("End led test\n");
+  PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
-unsigned char
-leds_arch_get(void)
-{
-  return ((P4OUT & BIT0) ? 0 : LEDS_1)
-       | ((P4OUT & BIT1) ? 0 : LEDS_2)
-       | ((P4OUT & BIT2) ? 0 : LEDS_3)
-       | ((P4OUT & BIT3) ? 0 : LEDS_4)
-       | ((P4OUT & BIT4) ? 0 : LEDS_5)
-       | ((P4OUT & BIT5) ? 0 : LEDS_6)
-       | ((P4OUT & BIT6) ? 0 : LEDS_7);
-}
-/*---------------------------------------------------------------------------*/
-void
-leds_arch_set(unsigned char leds)
-{
-  if(leds & LEDS_1) {
-    P4OUT &= ~BIT0;
-  } else {
-    P4OUT |= BIT0;
-  }
-  if(leds & LEDS_2) {
-    P4OUT &= ~BIT1;
-  } else {
-    P4OUT |= BIT1;
-  }
-  if(leds & LEDS_3) {
-    P4OUT &= ~BIT2;
-  } else {
-    P4OUT |= BIT2;
-  }
-  if(leds & LEDS_4) {
-    P4OUT &= ~BIT3;
-  } else {
-    P4OUT |= BIT3;
-  }
-  if(leds & LEDS_5) {
-    P4OUT &= ~BIT4;
-  } else {
-    P4OUT |= BIT4;
-  }
-  if(leds & LEDS_6) {
-    P4OUT &= ~BIT5;
-  } else {
-    P4OUT |= BIT5;
-  }
-  if(leds & LEDS_7) {
-    P4OUT &= ~BIT6;
-  } else {
-    P4OUT |= BIT6;
-  }
-}
-/*---------------------------------------------------------------------------*/
+

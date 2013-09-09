@@ -39,21 +39,14 @@
  */
 
 #include "contiki.h"
-#include <stdio.h>               /* For printf() */
-#include <stdint.h>              /* For typedef */
+#include <stdio.h> /* For printf() */
 #include "dev/leds.h"
 #include "dev/button-sensor.h"
 #include "leds-arch.h"
-#include "sys/clock.h"
-#include "dev/uart0.h"
-#include "dev/fram.h"
 
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "Hello world process");
-PROCESS(test_receive_process, "Testing receive data");
-PROCESS(test_spi, "Testing SPI");
-AUTOSTART_PROCESSES(&hello_world_process, &test_receive_process, &test_spi);
-
+AUTOSTART_PROCESSES(&hello_world_process);
 /*---------------------------------------------------------------------------*/
 static char led_count = 0x55;
 /*---------------------------------------------------------------------------*/
@@ -93,78 +86,9 @@ display_leds(int count)
 PROCESS_THREAD(hello_world_process, ev, data)
 {
   PROCESS_BEGIN();
-  SENSORS_ACTIVATE(button_1_sensor);
-  SENSORS_ACTIVATE(button_2_sensor);
-  SENSORS_ACTIVATE(button_3_sensor);
-  display_leds(led_count);
   while(1){
      printf("Hello, world[this device has contiki OS inside]\n");
-     PROCESS_WAIT_EVENT_UNTIL(ev == sensors_event);
-     if(data == &button_1_sensor){
-        led_count ++;
-     }
-     else if(data == &button_2_sensor){
-        led_count --;
-     }
-     else if(data == &button_3_sensor){
-        led_count ^=0xFF;
-     }
-     //display_leds(led_count);
-
-     clock_delay(6500);
-
   }
-  PROCESS_END();
-}
-/*---------------------------------------------------------------------------*/
-
-int uart_rx_callback(unsigned char c)
-{
-  uart0_writeString("Key pressed: ");
-  uart0_writeb(c);
-  uart0_writeString("\r\n");
-  return 1;
-}
-/*---------------------------------------------------------------------------*/
-
-PROCESS_THREAD(test_receive_process, ev, data)
-{
-
-  PROCESS_BEGIN();
-
-  uart0_set_input(uart_rx_callback);
-
-  while(1)
-  {
-   PROCESS_YIELD();
-  }
-
-  PROCESS_END();
-}
-/*---------------------------------------------------------------------------*/
-
-PROCESS_THREAD(test_spi, ev, data)
-{
-  PROCESS_BEGIN();
-
-
-
-  //display_leds(0x0F);
-
-  while(1)
-  {
-      uart0_writeString("SPI Testing\r\n");
-      uart0_writeString("Read Device ID:\r\n");
-      uint8_t id[4];
-      fram_readDeviceID((uint8_t *)id);
-
-      uart0_writeString("Manufacturer ID  :  ");uart0_writeNumber(id[0]);uart0_writeString("\r\n");
-      uart0_writeString("Continuation code:  ");uart0_writeNumber(id[1]);uart0_writeString("\r\n");
-      uart0_writeString("Product ID (1st) :  ");uart0_writeNumber(id[2]);uart0_writeString("\r\n");
-      uart0_writeString("Product ID (2nd) :  ");uart0_writeNumber(id[3]);uart0_writeString("\r\n");
-    PROCESS_YIELD();
-  }
-
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/

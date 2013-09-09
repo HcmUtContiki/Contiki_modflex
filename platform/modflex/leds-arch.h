@@ -41,28 +41,25 @@
 #include "contiki.h"
 #include "dev/leds.h"
 /*---------------------------------------------------------------------------*/
-#ifndef LEDS_0
-#define LEDS_0  BIT0
-#endif /* LEDS_0 */
 #ifndef LEDS_1
-#define LEDS_1  BIT1
+#define LEDS_1  BIT0
 #endif /* LEDS_1 */
 #ifndef LEDS_2
-#define LEDS_2  BIT2
+#define LEDS_2  BIT1
 #endif /* LEDS_2 */
 #ifndef LEDS_3
-#define LEDS_3  BIT3
+#define LEDS_3  BIT2
 #endif /* LEDS_3 */
 #ifndef LEDS_4
-#define LEDS_4  BIT4
+#define LEDS_4  BIT3
 #endif /* LEDS_4 */
 #ifndef LEDS_5
-#define LEDS_5  BIT5
+#define LEDS_5  BIT4
 #endif /* LEDS_5 */
 #ifndef LEDS_6
-#define LEDS_6  BIT6
+#define LEDS_6  BIT5
 #endif /* LEDS_6 */
 #ifndef LEDS_7
-#define LEDS_7  BIT7
+#define LEDS_7  BIT6
 #endif /* LEDS_7 */
 /*---------------------------------------------------------------------------*/

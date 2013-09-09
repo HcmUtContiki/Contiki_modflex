@@ -38,14 +38,13 @@
 #include "dev/serial-line.h"
 #include "dev/slip.h"
 #include "dev/uart0.h"
-//#include "dev/uart1.h"
-
+#include "dev/uart1.h"
+#include "dev/fram.h"
 #include "dev/watchdog.h"
 #include "dev/xmem.h"
 #include "lib/random.h"
 #include "net/netstack.h"
 #include "net/mac/frame802154.h"
-
 #if WITH_UIP6
 #include "net/uip-ds6.h"
 #endif /* WITH_UIP6 */
@@ -125,7 +124,7 @@ force_inclusion(int d1, int d2)
 #endif
 /*---------------------------------------------------------------------------*/
 #ifndef NODE_ID
-#define NODE_ID	0x03
+#define NODE_ID	0x02
 #endif /* NODE_ID */
 static void
 set_rime_addr(void)
@@ -205,7 +204,10 @@ main(int argc, char **argv)
 
   leds_on(LEDS_RED);
 
- uart0_init(115200); /* Must come before first printf */
+  uart0_init(9600);
+  uart1_init(115200); /* Must come before first printf */
+
+  fram_init(FRAM_MODE0);
 
 #if WITH_UIP
   slip_arch_init(115200);
@@ -363,7 +365,7 @@ main(int argc, char **argv)
 #endif /* WITH_UIP6 */
 
 #if !WITH_UIP && !WITH_UIP6
-  uart0_set_input(serial_line_input_byte);
+  uart1_set_input(serial_line_input_byte);
   serial_line_init();
 #endif
 
@@ -444,7 +446,7 @@ main(int argc, char **argv)
      */
     int s = splhigh();		/* Disable interrupts. */
     /* uart1_active is for avoiding LPM3 when still sending or receiving */
-    if(process_nevents() != 0 || uart0_active()) {
+    if(process_nevents() != 0 || uart1_active()) {
       splx(s);                  /* Re-enable interrupts. */
     } else {
       static unsigned long irq_energest = 0;
