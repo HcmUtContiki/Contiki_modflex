@@ -67,6 +67,24 @@ uart0_writeb(unsigned char c)
   /* Transmit the data. */
   UCA0TXBUF = c;
 }
+void
+/*---------------------------------------------------------------------------*/
+uart0_writeString(char *str)
+{
+  while (*str != '\0')
+  {
+    uart0_writeb((unsigned char) *str);
+    str++;
+  }
+}
+/*---------------------------------------------------------------------------*/
+void
+uart0_writeNumber(unsigned int num)
+{
+  char buffer[10];
+  itoa(num, buffer, 10);
+  uart0_writeString(buffer);
+}
 /*---------------------------------------------------------------------------*/
 /**
  * Initalize the RS232 port.
