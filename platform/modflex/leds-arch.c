@@ -47,65 +47,49 @@ leds_arch_init(void)
 {
 //  P4DIR |= (BIT6 + BIT5 + BIT5);
 //  P4OUT |= (BIT4 + BIT6 + BIT5);
-    P4DIR |= 0xFF;
-    P4OUT |= 0xFF;
+    P4DIR |= (BIT0 + BIT1);
+    P8DIR |= (BIT4 + BIT5 + BIT6);
+    P4OUT |= (BIT0 + BIT1);
+    P8OUT |= (BIT4 + BIT5 + BIT6);
 }
 /*---------------------------------------------------------------------------*/
 unsigned char
 leds_arch_get(void)
 {
-  return ((P4OUT & BIT0) ? 0 : LEDS_0)
-       | ((P4OUT & BIT1) ? 0 : LEDS_1)
-       | ((P4OUT & BIT2) ? 0 : LEDS_2)
-       | ((P4OUT & BIT3) ? 0 : LEDS_3)
-       | ((P4OUT & BIT4) ? 0 : LEDS_4)
-       | ((P4OUT & BIT5) ? 0 : LEDS_5)
-       | ((P4OUT & BIT6) ? 0 : LEDS_6)
-       | ((P4OUT & BIT7) ? 0 : LEDS_7);
+  return ((P4OUT & BIT1) ? 0 : LEDS_0)
+       | ((P4OUT & BIT0) ? 0 : LEDS_1)
+       | ((P8OUT & BIT6) ? 0 : LEDS_2)
+       | ((P8OUT & BIT5) ? 0 : LEDS_3)
+       | ((P8OUT & BIT4) ? 0 : LEDS_4);
 }
 /*---------------------------------------------------------------------------*/
 void
 leds_arch_set(unsigned char leds)
 {
   if(leds & LEDS_0) {
-    P4OUT &= ~BIT0;
+    P4OUT |= BIT1;
   } else {
-    P4OUT |= BIT0;
+    P4OUT &= !BIT1;
   }
   if(leds & LEDS_1) {
-    P4OUT &= ~BIT1;
+    P4OUT |= BIT0;
   } else {
-    P4OUT |= BIT1;
+    P4OUT &= ~BIT0;
   }
   if(leds & LEDS_2) {
-    P4OUT &= ~BIT2;
+    P8OUT |= BIT6;
   } else {
-    P4OUT |= BIT2;
+    P8OUT &= ~BIT6;
   }
   if(leds & LEDS_3) {
-    P4OUT &= ~BIT3;
+    P8OUT |= BIT5;
   } else {
-    P4OUT |= BIT3;
+    P8OUT &= ~BIT5;
   }
   if(leds & LEDS_4) {
-    P4OUT &= ~BIT4;
+    P8OUT |= BIT4;
   } else {
-    P4OUT |= BIT4;
-  }
-  if(leds & LEDS_5) {
-    P4OUT &= ~BIT5;
-  } else {
-    P4OUT |= BIT5;
-  }
-  if(leds & LEDS_6) {
-    P4OUT &= ~BIT6;
-  } else {
-    P4OUT |= BIT6;
-  }
-  if(leds & LEDS_7) {
-    P4OUT &= ~BIT7;
-  } else {
-    P4OUT |= BIT7;
+    P8OUT &= ~BIT4;
   }
 }
 /*---------------------------------------------------------------------------*/
