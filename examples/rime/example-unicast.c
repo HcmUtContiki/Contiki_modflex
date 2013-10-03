@@ -66,13 +66,15 @@ PROCESS_THREAD(example_unicast_process, ev, data)
     
   PROCESS_BEGIN();
 
+  //powertrace_start(CLOCK_SECOND * 30);
+
   unicast_open(&uc, 146, &unicast_callbacks);
 
   while(1) {
     static struct etimer et;
     rimeaddr_t addr;
     
-    etimer_set(&et, CLOCK_SECOND);
+    etimer_set(&et, CLOCK_SECOND * 30);
     
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
