@@ -54,6 +54,14 @@
 #include "sys/autostart.h"
 #include "sys/profile.h"
 
+#include <stdio.h>
+#define DEBUG 0
+#if DEBUG
+#define PRINTF(...) printf(__VA_ARGS__)
+#else
+#define PRINTF(...) do {} while (0)
+#endif
+
 #if UIP_CONF_ROUTER
 
 #ifndef UIP_ROUTER_MODULE
@@ -158,6 +166,58 @@ set_rime_addr(void)
   }
   printf("%d\n", n_addr.u8[i]);
 }
+
+
+/*
+ * uint8_t gatewayChannelScan
+ * -   Description: This function used to scan the most less interference, The result returned by
+ *                  compare the value of RSSI of each channel, the smallest value will be return because the
+ *                  more value of RSSI indicate that the more interference
+ * -   Output     : The best silent channel
+ */
+#ifdef GATEWAY_CHANNEL_SCAN
+#define NBR_SCAN_RUN          3
+uint8_t gatewayChannelScan()
+{
+  // Initialize the base channel and scan
+  uint8_t best_channel = MIN_CHANNEL; // The base channel for scanning
+  int     min_rssi     = 127;         // Initialize the min_rssi, RSSI is 2's complement 8 bit
+                                      // So the maximum value is 127
+  int     current_rssi = 0;
+  int     channel_rssi_mapping[MAX_CHANNEL - MIN_CHANNEL + 1];
+  uint8_t scan_count   = NBR_SCAN_RUN;
+
+  // Scan the channel
+  uint8_t index;
+  while (scan_count > 0)
+  {
+    for(index = 0; index <= MAX_CHANNEL - MIN_CHANNEL; index++) {
+      cc2520_set_channel(MIN_CHANNEL + index);
+      clock_wait(1);
+      current_rssi = cc2520_rssi() ;
+      // Get the mean value of previous and current value
+      channel_rssi_mapping[index] = (scan_count ==  NBR_SCAN_RUN) ?
+                                    current_rssi : (channel_rssi_mapping[index] + current_rssi );
+
+      // If the current channel have minimum rssi so update the best channel which have less
+      // interference
+      if (min_rssi > channel_rssi_mapping[index])
+      {
+         min_rssi     = channel_rssi_mapping[index];
+         best_channel = MIN_CHANNEL + index;
+      }
+      PRINTF("channel: %d, current_rssi: %d \n", MIN_CHANNEL + index, current_rssi);
+    }
+
+    PRINTF("best channel: %d, min_rssi: %d \n", best_channel, min_rssi);
+
+    scan_count--;
+  }
+
+  return best_channel;
+}
+#endif
+
 /*---------------------------------------------------------------------------*/
 #if !PROCESS_CONF_NO_PROCESS_NAMES
 static void
@@ -271,7 +331,15 @@ main(int argc, char **argv)
 
     cc2520_set_pan_addr(IEEE802154_PANID, shortaddr, longaddr);
   }
-  cc2520_set_channel(RF_CHANNEL);
+
+  static uint8_t rf_channel = MIN_CHANNEL;
+
+//If defined the node as GATEWAY so it must decide to chose the global channel its network
+#ifdef GATEWAY_CHANNEL_SCAN
+  //clock_wait(1000);
+  rf_channel = gatewayChannelScan();
+#endif
+  cc2520_set_channel(rf_channel);
 
   printf(CONTIKI_VERSION_STRING " started. ");
   if(node_id > 0) {
@@ -299,7 +367,7 @@ main(int argc, char **argv)
          NETSTACK_MAC.name, NETSTACK_RDC.name,
          CLOCK_SECOND / (NETSTACK_RDC.channel_check_interval() == 0 ? 1:
                          NETSTACK_RDC.channel_check_interval()),
-         RF_CHANNEL);
+                         rf_channel);
 
   process_start(&tcpip_process, NULL);
 
@@ -341,7 +409,7 @@ main(int argc, char **argv)
          NETSTACK_MAC.name, NETSTACK_RDC.name,
          CLOCK_SECOND / (NETSTACK_RDC.channel_check_interval() == 0? 1:
                          NETSTACK_RDC.channel_check_interval()),
-         RF_CHANNEL);
+                         rf_channel);
 #endif /* WITH_UIP6 */
 
 #if !WITH_UIP && !WITH_UIP6

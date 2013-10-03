@@ -88,8 +88,9 @@
 
 #define PACKETBUF_CONF_ATTRS_INLINE 1
 
+// Set the base channel for test only
 #ifndef RF_CHANNEL
-#define RF_CHANNEL              26
+#define RF_CHANNEL                       MIN_CHANNEL
 #endif /* RF_CHANNEL */
 
 #define CONTIKIMAC_CONF_BROADCAST_RATE_LIMIT 0

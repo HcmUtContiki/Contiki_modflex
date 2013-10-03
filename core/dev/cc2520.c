@@ -755,7 +755,6 @@ cc2520_read(void *buf, unsigned short bufsize)
   putchar(footer[0]); // RSSI
   putchar(footer[1]); // CRC correction
 #endif
-  printf("footer: 0x%x 0x%x\n", footer[0], footer[1]);
 
   if(footer[1] & FOOTER1_CRC_OK) {
     cc2520_last_rssi = footer[0];
