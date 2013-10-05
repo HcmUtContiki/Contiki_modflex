@@ -25,7 +25,7 @@
       se.sics.cooja.mspmote.WismoteMoteType
       <identifier>wismote1</identifier>
       <description>Wismote Mote Type #wismote1 getway</description>
-      <firmware EXPORT="copy">[CONTIKI_DIR]/examples/rime/example-unicast.wismote</firmware>
+      <firmware EXPORT="copy">[CONTIKI_DIR]/examples/rime/example-unicast-gw.wismote</firmware>
       <moteinterface>se.sics.cooja.interfaces.Position</moteinterface>
       <moteinterface>se.sics.cooja.interfaces.RimeAddress</moteinterface>
       <moteinterface>se.sics.cooja.interfaces.IPAddress</moteinterface>

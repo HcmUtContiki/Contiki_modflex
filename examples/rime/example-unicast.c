@@ -47,9 +47,14 @@
 
 #include <stdio.h>
 
+
+static uint16_t collision_count = 0;
+static uint16_t noack_count     = 0;
+
 /*---------------------------------------------------------------------------*/
 PROCESS(example_unicast_process, "Example unicast");
 AUTOSTART_PROCESSES(&example_unicast_process);
+
 /*---------------------------------------------------------------------------*/
 static void
 recv_uc(struct unicast_conn *c, const rimeaddr_t *from)
@@ -57,7 +62,40 @@ recv_uc(struct unicast_conn *c, const rimeaddr_t *from)
   printf("unicast message received from %d.%d\n",
 	 from->u8[0], from->u8[1]);
 }
-static const struct unicast_callbacks unicast_callbacks = {recv_uc};
+
+/*---------------------------------------------------------------------------*/
+static void
+sent_by_uc(struct unicast_conn *uc, int status, int num_tx)
+{
+  /*
+  printf("%d.%d: example-unicast: recv_from_uc from %d.%d\n",
+   rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
+         packetbuf_addr(PACKETBUF_ADDR_SENDER)->u8[0],
+         packetbuf_addr(PACKETBUF_ADDR_SENDER)->u8[1]);
+         */
+  switch (status)
+  {
+    case MAC_TX_COLLISION:
+    {
+      collision_count++;
+      break;
+    }
+    case MAC_TX_NOACK:
+    {
+      noack_count++;
+      break;
+    }
+
+    default:
+    break;
+  }
+
+  printf("total sent:%lu, collision:%u, noack: %u \n\r", rimestats.tx, collision_count, noack_count);
+
+}
+/*---------------------------------------------------------------------------*/
+
+static const struct unicast_callbacks unicast_callbacks = {recv_uc, sent_by_uc};
 static struct unicast_conn uc;
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(example_unicast_process, ev, data)
@@ -66,7 +104,7 @@ PROCESS_THREAD(example_unicast_process, ev, data)
     
   PROCESS_BEGIN();
 
-  //powertrace_start(CLOCK_SECOND * 30);
+  powertrace_start(CLOCK_SECOND * 30);
 
   unicast_open(&uc, 146, &unicast_callbacks);
 
@@ -77,7 +115,6 @@ PROCESS_THREAD(example_unicast_process, ev, data)
     etimer_set(&et, CLOCK_SECOND * 30);
     
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-
     packetbuf_copyfrom("Hello", 5);
     addr.u8[0] = 1;
     addr.u8[1] = 0;
