@@ -75,13 +75,13 @@
 #endif /* QUEUEBUF_CONF_NUM */
 
 #ifndef TIMESYNCH_CONF_ENABLED
-#define TIMESYNCH_CONF_ENABLED           1
+#define TIMESYNCH_CONF_ENABLED           0
 #endif /* TIMESYNCH_CONF_ENABLED */
 
 #if TIMESYNCH_CONF_ENABLED
 /* CC2520 SDF timestamps must be on if timesynch is enabled. */
 #undef CC2520_CONF_SFD_TIMESTAMPS
-#define CC2520_CONF_SFD_TIMESTAMPS       0
+#define CC2520_CONF_SFD_TIMESTAMPS       1
 #endif /* TIMESYNCH_CONF_ENABLED */
 
 #endif /* WITH_UIP6 */
