@@ -6,13 +6,13 @@
 #include "platform-conf.h"
 
 #ifndef NETSTACK_CONF_MAC
-#define NETSTACK_CONF_MAC     csma_driver
-//#define NETSTACK_CONF_MAC     nullmac_driver
+//#define NETSTACK_CONF_MAC     csma_driver
+#define NETSTACK_CONF_MAC     nullmac_driver
 #endif /* NETSTACK_CONF_MAC */
 
 #ifndef NETSTACK_CONF_RDC
-#define NETSTACK_CONF_RDC     contikimac_driver
-//#define NETSTACK_CONF_RDC     nullrdc_driver
+//#define NETSTACK_CONF_RDC     contikimac_driver
+#define NETSTACK_CONF_RDC     nullrdc_driver
 #endif /* NETSTACK_CONF_RDC */
 
 #ifndef NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE
@@ -81,7 +81,7 @@
 #if TIMESYNCH_CONF_ENABLED
 /* CC2520 SDF timestamps must be on if timesynch is enabled. */
 #undef CC2520_CONF_SFD_TIMESTAMPS
-#define CC2520_CONF_SFD_TIMESTAMPS       1
+#define CC2520_CONF_SFD_TIMESTAMPS       0
 #endif /* TIMESYNCH_CONF_ENABLED */
 
 #endif /* WITH_UIP6 */
