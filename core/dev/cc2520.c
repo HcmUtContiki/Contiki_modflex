@@ -227,7 +227,7 @@ static void RELEASE_LOCK(void) {
 }
 /*---------------------------------------------------------------------------*/
 static uint8_t
-getreg(uint16_t regname)
+getreg(uint8_t regname)
 {
   uint8_t reg;
   CC2520_READ_REG(regname, reg);
@@ -385,15 +385,10 @@ cc2520_transmit(unsigned short payload_len)
   strobe(CC2520_INS_SRXON);
   BUSYWAIT_UNTIL(status() & BV(CC2520_RSSI_VALID) , RTIMER_SECOND / 10);
 #ifdef CONTIKI_TARGET_MODFLEX
-CC2520_SET_CC2591_TXMODE;
+  CC2520_SET_CC2591_TXMODE;
 #endif 
   strobe(CC2520_INS_STXONCCA);
-  
-#ifdef CONTIKI_TARGET_MODFLEX
-/* Wait for transmission to end before change to RX mode */
-  BUSYWAIT_UNTIL(!(status() & BV(CC2520_TX_ACTIVE)), RTIMER_SECOND / 10);
-  CC2520_SET_CC2591_RXMODE;
-#endif
+
 #else /* WITH_SEND_CCA */
 #ifdef CONTIKI_TARGET_MODFLEX
   CC2520_SET_CC2591_TXMODE;
@@ -428,6 +423,10 @@ CC2520_SET_CC2591_TXMODE;
 	 accurate measurement of the transmission time.*/
      //BUSYWAIT_UNTIL(getreg(CC2520_EXCFLAG0) & TX_FRM_DONE , RTIMER_SECOND / 100);
       BUSYWAIT_UNTIL(!(status() & BV(CC2520_TX_ACTIVE)), RTIMER_SECOND / 10);
+
+#ifdef CONTIKI_TARGET_MODFLEX
+      CC2520_SET_CC2591_RXMODE;
+#endif
 
 #ifdef ENERGEST_CONF_LEVELDEVICE_LEVELS
       ENERGEST_OFF_LEVEL(ENERGEST_TYPE_TRANSMIT,cc2520_get_txpower());
