@@ -3,7 +3,11 @@
 #ifndef CONTIKI_CONF_H
 #define CONTIKI_CONF_H
 
+
+
+
 #include "platform-conf.h"
+
 
 #ifndef NETSTACK_CONF_MAC
 //#define NETSTACK_CONF_MAC     csma_driver 
@@ -33,6 +37,12 @@
 
 #define NULLRDC_CONF_802154_AUTOACK      1
 
+/* Specify whether the RDC layer should enable
+   per-packet power profiling. */
+#define CONTIKIMAC_CONF_COMPOWER         1
+#define XMAC_CONF_COMPOWER               1
+#define CXMAC_CONF_COMPOWER              1
+
 #if WITH_UIP6
 /* Network setup for IPv6 */
 #define NETSTACK_CONF_NETWORK sicslowpan_driver
@@ -61,10 +71,6 @@
 #define CXMAC_CONF_ANNOUNCEMENTS         0
 #define XMAC_CONF_ANNOUNCEMENTS          0
 #define CONTIKIMAC_CONF_ANNOUNCEMENTS    0
-
-#define CONTIKIMAC_CONF_COMPOWER         1
-#define XMAC_CONF_COMPOWER               1
-#define CXMAC_CONF_COMPOWER              1
 
 #ifndef COLLECT_NEIGHBOR_CONF_MAX_COLLECT_NEIGHBORS
 #define COLLECT_NEIGHBOR_CONF_MAX_COLLECT_NEIGHBORS     32
@@ -100,7 +106,9 @@
 #define SHELL_VARS_CONF_RAM_END 0x2000
 
 #define PROFILE_CONF_ON 0
+#ifndef ENERGEST_CONF_ON
 #define ENERGEST_CONF_ON 1
+#endif /* ENERGEST_CONF_ON */
 
 #define ELFLOADER_CONF_TEXT_IN_ROM 0
 #ifndef ELFLOADER_CONF_DATAMEMORY_SIZE

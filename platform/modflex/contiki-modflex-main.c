@@ -28,18 +28,15 @@
  *
  */
 
-#include "contiki.h"
 #include <stdio.h>
 #include <string.h>
-
+#include "contiki.h"
 #include "dev/cc2520.h"
 //#include "dev/ds2411.h"
 #include "dev/leds.h"
 #include "dev/serial-line.h"
 #include "dev/slip.h"
 #include "dev/uart0.h"
-#include "dev/uart1.h"
-#include "dev/fram.h"
 #include "dev/watchdog.h"
 #include "dev/xmem.h"
 #include "lib/random.h"
@@ -52,6 +49,8 @@
 #include "net/rime.h"
 
 #include "node-id.h"
+#include "cfs-coffee-arch.h"
+#include "cfs/cfs-coffee.h"
 #include "sys/autostart.h"
 #include "sys/profile.h"
 
@@ -151,7 +150,6 @@ set_rime_addr(void)
   n_addr.u8[0] = node_id & 0xff;
   n_addr.u8[1] = node_id >> 8;
 #endif
-
   rimeaddr_set_node_addr(&n_addr);
   printf("Rime started with address ");
   for(i = 0; i < sizeof(n_addr.u8) - 1; i++) {
@@ -170,6 +168,7 @@ print_processes(struct process * const processes[])
     printf(" '%s'", (*processes)->name);
     processes++;
   }
+  putchar('\r');
   putchar('\n');
 }
 #endif /* !PROCESS_CONF_NO_PROCESS_NAMES */
@@ -190,6 +189,7 @@ set_gateway(void)
   }
 }
 #endif /* WITH_UIP */
+
 /*---------------------------------------------------------------------------*/
 int
 main(int argc, char **argv)
@@ -204,13 +204,11 @@ main(int argc, char **argv)
 
   leds_on(LEDS_RED);
 
+  /* Must come before first printf */
   uart0_init(9600);
-  uart1_init(115200); /* Must come before first printf */
-
-  fram_init(FRAM_MODE0);
 
 #if WITH_UIP
-  slip_arch_init(115200);
+  slip_arch_init(9600);
 #endif /* WITH_UIP */
 
   leds_on(LEDS_GREEN);
@@ -222,7 +220,8 @@ main(int argc, char **argv)
   //ds2411_id[2] &= 0xfe;
 
   leds_on(LEDS_BLUE);
-  //xmem_init();
+  xmem_init();
+  //xmem_erase(262144, 0);
 
   leds_off(LEDS_RED);
   rtimer_init();
@@ -269,7 +268,7 @@ main(int argc, char **argv)
     memset(longaddr, 0, sizeof(longaddr));
     rimeaddr_copy((rimeaddr_t *)&longaddr, &rimeaddr_node_addr);
 
-    printf("MAC %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x ",
+    printf("MAC %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
            longaddr[0], longaddr[1], longaddr[2], longaddr[3],
            longaddr[4], longaddr[5], longaddr[6], longaddr[7]);
 
@@ -277,7 +276,7 @@ main(int argc, char **argv)
   }
   cc2520_set_channel(RF_CHANNEL);
 
-  printf(CONTIKI_VERSION_STRING " started. ");
+  printf(CONTIKI_VERSION_STRING " started\n");
   if(node_id > 0) {
     printf("Node id is set to %u.\n", node_id);
   } else {
@@ -312,23 +311,6 @@ main(int argc, char **argv)
     uip_ds6_addr_t *lladdr;
     int i;
     lladdr = uip_ds6_get_link_local(-1);
-/*    lladdr->ipaddr.u8[00] = 0xfe;
-    lladdr->ipaddr.u8[01] = 0x80;
-    lladdr->ipaddr.u8[02] = 0x00;
-    lladdr->ipaddr.u8[03] = 0x00;
-    lladdr->ipaddr.u8[04] = 0x00;
-    lladdr->ipaddr.u8[05] = 0x00;
-    lladdr->ipaddr.u8[06] = 0x00;
-    lladdr->ipaddr.u8[07] = 0x00;
-  //lladdr->ipaddr.u8[08] = 0x09;
-  //lladdr->ipaddr.u8[09] = 0x0A;
-    lladdr->ipaddr.u8[10] = 0x00;
-    lladdr->ipaddr.u8[11] = 0x00; 
-    lladdr->ipaddr.u8[12] = 0x00;
-    lladdr->ipaddr.u8[13] = 0x00; 
-    lladdr->ipaddr.u8[14] = 0x00;
-    lladdr->ipaddr.u8[15] = 0x02;
-*/
     for(i = 0; i < 7; ++i) {
       printf("%02x%02x:", lladdr->ipaddr.u8[i * 2],
              lladdr->ipaddr.u8[i * 2 + 1]);
@@ -365,7 +347,7 @@ main(int argc, char **argv)
 #endif /* WITH_UIP6 */
 
 #if !WITH_UIP && !WITH_UIP6
-  uart1_set_input(serial_line_input_byte);
+  uart0_set_input(serial_line_input_byte);
   serial_line_init();
 #endif
 
@@ -419,7 +401,8 @@ main(int argc, char **argv)
 #if !PROCESS_CONF_NO_PROCESS_NAMES
   print_processes(autostart_processes);
 #else /* !PROCESS_CONF_NO_PROCESS_NAMES */
-  putchar('\n'); /* include putchar() */
+  putchar('\r'); /* include putchar() */
+  putchar('\n');
 #endif /* !PROCESS_CONF_NO_PROCESS_NAMES */
   autostart_start(autostart_processes);
 
@@ -445,8 +428,8 @@ main(int argc, char **argv)
      * Idle processing.
      */
     int s = splhigh();		/* Disable interrupts. */
-    /* uart1_active is for avoiding LPM3 when still sending or receiving */
-    if(process_nevents() != 0 || uart1_active()) {
+    /* uart0_active is for avoiding LPM3 when still sending or receiving */
+    if(process_nevents() != 0 || uart0_active()) {
       splx(s);                  /* Re-enable interrupts. */
     } else {
       static unsigned long irq_energest = 0;
@@ -476,6 +459,8 @@ main(int argc, char **argv)
       ENERGEST_ON(ENERGEST_TYPE_CPU);
     }
   }
+
+  return 0;
 }
 /*---------------------------------------------------------------------------*/
 #if LOG_CONF_ENABLED

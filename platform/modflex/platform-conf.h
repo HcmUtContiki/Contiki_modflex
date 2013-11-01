@@ -86,7 +86,7 @@ typedef unsigned long off_t;
 #define CFS_RAM_CONF_SIZE 4096
 
 /*
- * SPI bus configuration for the wismote
+ * SPI bus configuration for the TMote Sky.
  */
 
 /* SPI input/output registers. */
@@ -107,28 +107,9 @@ typedef unsigned long off_t;
 /* #define SPI_WAITFORTxREADY() while (!(UCB0IFG & UCRXIFG)) */
 /* #define SPI_BUSY_WAIT() 		while ((UCB0STAT & UCBUSY) == 1) */
 
-#define MOSI           1  /* P3.1 - Output: SPI Master out - slave in (MOSI) */
-#define MISO           2  /* P3.2 - Input:  SPI Master in - slave out (MISO) */
-#define SCK            3  /* P3.3 - Output: SPI Serial Clock (SCLK) */
-/* #define SCK            1  /\* P3.1 - Output: SPI Serial Clock (SCLK) *\/ */
-/* #define MOSI           2  /\* P3.2 - Output: SPI Master out - slave in (MOSI) *\/ */
-/* #define MISO           3  /\* P3.3 - Input:  SPI Master in - slave out (MISO) *\/ */
-
-/*
- * SPI bus - M25P80 external flash configuration.
- */
-
-#define FLASH_PWR       //3       /* P4.3 Output */
-#define FLASH_CS        //4       /* P4.4 Output */
-#define FLASH_HOLD      //7       /* P4.7 Output */
-
-/* Enable/disable flash access to the SPI bus (active low). */
-
-#define SPI_FLASH_ENABLE()  //( P4OUT &= ~BV(FLASH_CS) )
-#define SPI_FLASH_DISABLE() //( P4OUT |=  BV(FLASH_CS) )
-
-#define SPI_FLASH_HOLD()               // ( P4OUT &= ~BV(FLASH_HOLD) )
-#define SPI_FLASH_UNHOLD()              //( P4OUT |=  BV(FLASH_HOLD) )
+#define SCK            3  /* P3.1 - Output: SPI Serial Clock (SCLK) */
+#define MOSI           1  /* P3.2 - Output: SPI Master out - slave in (MOSI) */
+#define MISO           2  /* P3.3 - Input:  SPI Master in - slave out (MISO) */
 
 /*
  * SPI bus - CC2520 pin configuration.
@@ -143,12 +124,12 @@ typedef unsigned long off_t;
 #define CC2520_FIFO_PORT(type)     P1##type
 #define CC2520_FIFO_PIN            5
 /* P8.7 - Input: CCA from CC2520 */   //dumb port
-/*#define CC2520_CCA_PORT(type)  */   //P8##type
-/*#define CC2520_CCA_PIN         */   //7
+#define CC2520_CCA_PORT(type)      P8##type
+#define CC2520_CCA_PIN             7
 
 /* P8.6 - Input:  SFD from CC2520 */ //dumb port
-/*#define CC2520_SFD_PORT(type)   */ //P8##type
-/*#define CC2520_SFD_PIN          */ //6 
+#define CC2520_SFD_PORT(type)      P8##type
+#define CC2520_SFD_PIN             6
 
 /* P3.0 - Output: SPI Chip Select (CS_N) */
 #define CC2520_CSN_PORT(type)      P3##type

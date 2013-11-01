@@ -7,84 +7,199 @@
  */
 #include "contiki.h"
 #include "usci_spi.h"
-#include "spi_internal.h"
 #include "fram.h"
+#include "dev/uart0.h"
 
-void fram_init(uint8_t spi_mode)
+/*---------------------------------------------------------------------------------------*/
+error_t fram_init(uint8_t spi_mode)
 {
+  CSSEL &= ~(1 << CSPIN);   /* I/O selected */
   CSDIR |= (1 << CSPIN);
-  FRAM_DISABLE;
+  CS_DISABLE();
 
-  HOLDDIR |= (1 << HOLDPIN);
-  HOLD_DISABLE;
+  //VDDSEL &= ~(1 << VDDPIN);
+  //VDDDIR |= (1 << VDDPIN);
+  //VDD_ENABLE;
 
+  WPSEL &= ~(1 << WPPIN);   /* I/O selected */
   WPDIR |= (1 << WPPIN);
-  WP_DISABLE;
-
-  #if (SPI_USE_USCI == 1)
-    P5DIR &= ~0x80;   // P5.7 = USCI_A1 MISO as input
-    P5DIR |= 0x40;    // P5.6 = USCI_A1 MOSI as output
-    P3DIR |= 0x40;    // P3.6 = USCI_A1 SCK as output
-
-    P3SEL |= 0x40;    // P3.6    USCI_A1 option selected   0100 0000B
-    P5SEL |= 0x0C0;   // P5.7,6  USCI_A1 option selected   1100 0000
-  #elif (SPI_USE_USCI == 3)
-    P5DIR &= ~0x10;   // P5.4 = USCI_B1 MISO as input
-    P3DIR |= 0x80;    // P3.7 = USCI_B1 MOSI as output
-    P5DIR |= 0x20;    // P5.5 = USCI_B1 SCK as output
-
-    P3SEL |= 0x80;    // P3.7    USCI_B1 option selected   1000 0000
-    P5SEL |= 0x30;    // P5.5,4  USCI_B1 option selected   0011 0000
-  #endif
+  WP_DISABLE();
 
   usci_spi_init(spi_mode);
-  FRAM_ENABLE;
+
+  /* Test SPI Operation */
+  uint8_t pDeviceID[4];
+  fram_readDeviceID(pDeviceID);
+  if (pDeviceID[0] != 0x04 || pDeviceID[1] != 0x7F || pDeviceID[2] != 0x28 || pDeviceID[3] != 0x03)
+  {
+    return ERROR_INIT_FAIL;
+  }
+
+  return ERROR_NONE;
 }
 
-void fram_writeEnable(void)
+/*---------------------------------------------------------------------------------------*/
+static error_t compareArray(const uint8_t *src, uint8_t *dest, uint16_t size)
 {
+  uint16_t i;
+  for (i = 0; i < size; i++)
+  {
+    if (src[i] != dest[i])
+	    return ERROR_NOT_EQUAL;
+  }
+  
+  return ERROR_NONE;
+}
+
+/*---------------------------------------------------------------------------------------*/
+static void sendAddr(uint32_t addr)
+{
+  usci_spi_sendByte((addr & 0xFF0000) >> 16);
+  usci_spi_sendByte((addr & 0xFF00) >> 8);
+  usci_spi_sendByte(addr & 0xFF);
+}
+
+/*---------------------------------------------------------------------------------------*/
+static void fram_writeEnable(void)
+{
+  CS_ENABLE();
   usci_spi_sendByte(CMD_WREN);
+  CS_DISABLE();
 }
 
-void fram_writeDisable(void)
+/*---------------------------------------------------------------------------------------*/
+static void fram_writeDisable(void)
 {
+  CS_ENABLE();
   usci_spi_sendByte(CMD_WRDI);
+  CS_DISABLE();
 }
 
-uint8_t fram_readStatusRegister(void)
+/*---------------------------------------------------------------------------------------*/
+error_t fram_readMemory(uint32_t startAddr, uint8_t *pData, uint16_t size)
 {
-  return (usci_spi_sendByte(CMD_RDSR));
+  uint16_t i;
+
+  CS_ENABLE();
+  usci_spi_sendByte(CMD_READ);
+  sendAddr(startAddr);
+  for(i = 0; i < size; i++)
+  {
+    pData[i] = usci_spi_getByte();
+  }
+  CS_DISABLE();
+
+  return ERROR_NONE;
 }
 
-void fram_writeStatusRegister(uint8_t val)
+/*---------------------------------------------------------------------------------------*/
+//error_t fram_fastReadMemory(uint32_t startAddr, uint8_t *pData, uint16_t size)
+//{
+//  CS_ENABLE();
+//  usci_spi_sendByte(CMD_FSTRD);
+//  CS_ENABLE();
+//
+//  return ERROR_NONE;
+//}
+
+/*---------------------------------------------------------------------------------------*/
+error_t fram_writeByte(uint32_t startAddr, uint8_t data)
 {
-  fram_writeEnable();
-  usci_spi_sendByte(CMD_WRSR);
-  fram_writeDisable();
+  uint8_t nCheck = 0;
+  uint8_t dummyRead;
+  
+  while (nCheck < 3)
+  {
+    fram_writeEnable();
+
+    CS_ENABLE();
+    usci_spi_sendByte(CMD_WRITE);
+    sendAddr(startAddr);
+    usci_spi_sendByte(data);
+    CS_DISABLE();
+
+    fram_writeDisable();
+	
+	  /* Read again for checking correctness */
+	  fram_readMemory(startAddr, &dummyRead, 1);
+	  if (dummyRead == data)
+	    return ERROR_NONE;
+	  
+	  nCheck++;
+  }
+  
+  return ERROR_WRITE_FAIL;
 }
 
-uint8_t fram_readMemory(void)
+/*---------------------------------------------------------------------------------------*/
+error_t fram_writeMemory(uint32_t startAddr, const uint8_t *pData, uint16_t size)
 {
-  return (usci_spi_sendByte(CMD_READ));
+  uint8_t dummyRead[1000];
+  uint16_t i;
+  uint8_t nCheck = 0;
+  
+  while (nCheck < 3)
+  {
+    fram_writeEnable();
+
+    CS_ENABLE();
+    usci_spi_sendByte(CMD_WRITE);
+    sendAddr(startAddr);
+    for(i = 0; i < size; i++)
+    {
+      usci_spi_sendByte(pData[i]);
+    }
+    CS_DISABLE();
+
+    fram_writeDisable();
+    
+	  /* Read again for checking correctness */
+	  fram_readMemory(startAddr, dummyRead, size);
+	  if (compareArray(pData, dummyRead, size) == ERROR_NONE)
+	    return ERROR_NONE;
+	  
+	  nCheck++;
+  }
+
+  return ERROR_WRITE_FAIL;
 }
 
-uint8_t fram_writeMemory(void)
+/*---------------------------------------------------------------------------------------*/
+error_t fram_readDeviceID(uint8_t* pDeviceID)
 {
-  return (usci_spi_sendByte(CMD_WRITE));
-}
+  unsigned char i;
 
-void fram_readDeviceID(uint8_t* pDeviceID)
-{
+  CS_ENABLE();
   usci_spi_sendByte(CMD_RDID);
-  usci_spi_readFrame(pDeviceID, 4);
+  for(i = 0; i < 4; i++)
+  {
+    pDeviceID[i] = usci_spi_getByte();
+  }
+  CS_DISABLE();
+
+  return ERROR_NONE;
 }
 
-uint8_t fram_fastReadMemory(void)
-{
-  return (usci_spi_sendByte(CMD_FSTRD));
-}
+/*---------------------------------------------------------------------------------------*/
+//error_t fram_sleepMode(void)
+//{
+//  CS_ENABLE();
+//  usci_spi_sendByte(CMD_SLEEP);
+//  CS_DISABLE();
 
-void fram_sleepMode(void)
-{
-  usci_spi_sendByte(CMD_SLEEP);
-}
+//  return ERROR_NONE;
+//}
+
+/*---------------------------------------------------------------------------------------*/
+//uint8_t fram_readStatusRegister(void)
+//{
+//  return (usci_spi_sendByte(CMD_RDSR));
+//}
+
+/*---------------------------------------------------------------------------------------*/
+//void fram_writeStatusRegister(uint8_t val)
+//{
+//  fram_writeEnable();
+//  usci_spi_sendByte(CMD_WRSR);
+//  fram_writeDisable();
+//}
