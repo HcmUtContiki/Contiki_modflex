@@ -37,7 +37,7 @@
 #include "net/netstack.h"
 #include "dev/button-sensor.h"
 #include "dev/serial-line.h"
-#if CONTIKI_TARGET_Z1
+#if CONTIKI_TARGET_Z1 || CONTIKI_TARGET_MODFLEX
 #include "dev/uart0.h"
 #else
 #include "dev/uart1.h"
@@ -82,7 +82,7 @@ collect_common_send(void)
 void
 collect_common_net_init(void)
 {
-#if CONTIKI_TARGET_Z1
+#if CONTIKI_TARGET_Z1 || CONTIKI_TARGET_MODFLEX
   uart0_set_input(serial_line_input_byte);
 #else
   uart1_set_input(serial_line_input_byte);
@@ -139,8 +139,11 @@ PROCESS_THREAD(udp_server_process, ev, data)
   PROCESS_BEGIN();
 
   PROCESS_PAUSE();
-
+#ifdef CONTIKI_TARGET_MODFLEX
+  SENSORS_ACTIVATE(button_1_sensor);
+#else
   SENSORS_ACTIVATE(button_sensor);
+#endif
 
   PRINTF("UDP server started\n");
 
@@ -178,7 +181,11 @@ PROCESS_THREAD(udp_server_process, ev, data)
     PROCESS_YIELD();
     if(ev == tcpip_event) {
       tcpip_handler();
+#ifdef CONTIKI_TARGET_MODFLEX
+    } else if (ev == sensors_event && data == &button_1_sensor) {
+#else
     } else if (ev == sensors_event && data == &button_sensor) {
+#endif
       PRINTF("Initiaing global repair\n");
       rpl_repair_root(RPL_DEFAULT_INSTANCE);
     }

@@ -50,7 +50,7 @@ static unsigned long time_offset;
 static int send_active = 1;
 
 #ifndef PERIOD
-#define PERIOD 60
+#define PERIOD 5
 #endif
 #define RANDWAIT (PERIOD)
 
@@ -102,6 +102,9 @@ collect_common_recv(const rimeaddr_t *originator, uint8_t seqno, uint8_t hops,
   }
   printf("\n");
   leds_blink();
+#ifdef CONTIKI_TARGET_MODFLEX
+  leds_toggle(LEDS_1);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(collect_common_process, ev, data)

@@ -119,6 +119,7 @@ collect_common_send(void)
     return;
   }
   memset(&msg, 0, sizeof(msg));
+  memset(msg.msg.sensors, 0, 10);
   seqno++;
   if(seqno == 0) {
     /* Wrap to 128 to identify restarts */
@@ -159,12 +160,16 @@ collect_common_send(void)
 
   uip_udp_packet_sendto(client_conn, &msg, sizeof(msg),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
+  printf("packet is sent\n");
+#ifdef CONTIKI_TARGET_MODFLEX
+  leds_toggle(LEDS_0);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 void
 collect_common_net_init(void)
 {
-#if CONTIKI_TARGET_Z1
+#if CONTIKI_TARGET_Z1 || CONTIKI_TARGET_MODFLEX
   uart0_set_input(serial_line_input_byte);
 #else
   uart1_set_input(serial_line_input_byte);

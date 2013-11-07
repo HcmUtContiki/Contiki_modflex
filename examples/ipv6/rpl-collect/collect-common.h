@@ -41,6 +41,9 @@
 
 #include "contiki.h"
 #include "net/rime/rimeaddr.h"
+#ifdef CONTIKI_TARGET_MODFLEX
+#include "leds-arch.h"
+#endif
 
 void collect_common_net_init(void);
 void collect_common_net_print(void);
