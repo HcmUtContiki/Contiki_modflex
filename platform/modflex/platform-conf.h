@@ -146,9 +146,9 @@ typedef unsigned long off_t;
 /*#define CC2520_CCA_PORT(type)  */   //P8##type
 /*#define CC2520_CCA_PIN         */   //7
 
-/* P8.6 - Input:  SFD from CC2520 */ //dumb port
-/*#define CC2520_SFD_PORT(type)   */ //P8##type
-/*#define CC2520_SFD_PIN          */ //6 
+/* P1.4 - Input:  SFD from CC2520 */
+#define CC2520_SFD_PORT(type)      P1##type
+#define CC2520_SFD_PIN             4
 
 /* P3.0 - Output: SPI Chip Select (CS_N) */
 #define CC2520_CSN_PORT(type)      P3##type
@@ -167,9 +167,8 @@ typedef unsigned long off_t;
 #define CC2520_FIFOP_IS_1 (!!(CC2520_FIFOP_PORT(IN) & BV(CC2520_FIFOP_PIN)))
 #define CC2520_FIFO_IS_1  (!!(CC2520_FIFO_PORT(IN) & BV(CC2520_FIFO_PIN)))
 /* #define CC2520_CCA_IS_1   (!!(CC2520_CCA_PORT(IN) & BV(CC2520_CCA_PIN))) */
-/* #define CC2520_SFD_IS_1   (!!(CC2520_SFD_PORT(IN) & BV(CC2520_SFD_PIN))) */
+#define CC2520_SFD_IS_1   (!!(CC2520_SFD_PORT(IN) & BV(CC2520_SFD_PIN)))
 #define CC2520_CCA_IS_1   (getreg(CC2520_FSMSTAT1) & BIT4)
-#define CC2520_SFD_IS_1   (getreg(CC2520_FSMSTAT1) & BIT5)
 
 /* The CC2520 reset pin. */
 #define SET_RESET_INACTIVE()   (CC2520_RESET_PORT(OUT) |=  BV(CC2520_RESET_PIN))

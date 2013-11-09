@@ -341,6 +341,14 @@ cc2520_init(void)
   /* Set FIFOP threshold to maximum .*/
   setreg(CC2520_FIFOPCTRL,   FIFOP_THR(0x7F));
 
+#ifdef CONTIKI_TARGET_MODFLEX
+  /*Set the GPIO0 as output the SFD value to MSP430F543xA*/
+  setreg(CC2520_GPIOCTRL0, GPIOCTRL_SFD);
+  /*In Proflex module the GPIO0 of cc2520(cc2520 data sheet p.11) is connect to PIN 21 (PORT1.4) (MSP430F543xA Table 3. Terminal Functions)*/
+  P1DIR &= ~BIT4;
+  P1SEL |=  BIT4;
+#endif
+
   cc2520_set_pan_addr(0xffff, 0x0000, NULL);
   cc2520_set_channel(26);
 
@@ -399,8 +407,7 @@ cc2520_transmit(unsigned short payload_len)
     if(CC2520_SFD_IS_1) {
       {
         rtimer_clock_t sfd_timestamp;
-        sfd_timestamp = TBCCR1;
-        //sfd_timestamp = cc2520_sfd_start_time; //binh
+        sfd_timestamp = cc2520_sfd_start_time;
         if(packetbuf_attr(PACKETBUF_ATTR_PACKET_TYPE) ==
            PACKETBUF_ATTR_PACKET_TYPE_TIMESTAMP) {
           /* Write timestamp to last two bytes of packet in TXFIFO. */

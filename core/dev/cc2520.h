@@ -196,6 +196,10 @@ void cc2520_set_cca_threshold(int value);
   } while (0)
 
 /*---------------------------------------------------------------------------*/
+/* The value of SFD will be write into GPIO register
+ * Table 8: GPIO reset state cc2520 data sheet*/
+#define GPIOCTRL_SFD  0x2A
+
 #ifdef CONTIKI_TARGET_MODFLEX
 #define GPIOCTRL_SETB 0x7F
 #define GPIOCTRL_CLRB 0x7E
