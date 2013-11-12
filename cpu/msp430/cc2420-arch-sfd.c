@@ -46,7 +46,7 @@ ISR(TIMERB1, cc2420_timerb1_interrupt)
   ENERGEST_ON(ENERGEST_TYPE_IRQ);
   /* always read TBIV to clear IFG */
   tbiv = TBIV;
-  if(CC2520_SFD_PIN) {
+  if(CC2420_SFD_PIN) {
     cc2420_sfd_counter++;
     cc2420_sfd_start_time = TBCCR1;
   } else {
@@ -60,7 +60,7 @@ void
 cc2420_arch_sfd_init(void)
 {
   /* Need to select the special function! */
-  P1SEL = BV(CC2520_SFD_PIN);
+  P1SEL = BV(CC2420_SFD_PIN);
 
   /* start timer B - 32768 ticks per second */
   TBCTL = TBSSEL_1 | TBCLR;
