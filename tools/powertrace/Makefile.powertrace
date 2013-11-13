@@ -2,9 +2,10 @@ ifndef MAKEFILE_POWERTRACE
 MAKEFILE_POWERTRACE = 1
 ifdef LOG
 powertrace-parse:
-	cat $(LOG) | grep -a "P " | $(CONTIKI)/tools/powertrace/parse-power-data > powertrace-data
-	cat $(LOG) | grep -a "P " | $(CONTIKI)/tools/powertrace/parse-node-power | sort -nr > powertrace-node-data
-	cat $(LOG) | $(CONTIKI)/tools/powertrace/parse-sniff-data | sort -n > powertrace-sniff-data
+	cat $(LOG) | grep -a " P" | $(CONTIKI)/tools/powertrace/parse-power-data > powertrace-data
+	cat $(LOG) | grep -a " P" | $(CONTIKI)/tools/powertrace/parse-node-power | sort -nr > powertrace-node-data
+	cat $(LOG) | grep -a "SP" | $(CONTIKI)/tools/powertrace/parse-ipv6-sniff-data | sort -n > powertrace-ipv6-sniff-data
+#	cat $(LOG) | grep -a "SP" | $(CONTIKI)/tools/powertrace/parse-sniff-data | sort -n > powertrace-sniff-data
 else #LOG
 powertrace-parse:
 	@echo LOG must be defined to point to the powertrace log file to parse
@@ -22,6 +23,7 @@ powertrace-plot-node:
 powertrace-show:
 	gv powertrace-power.eps
 	gv powertrace-node-power.eps
+	gv powertrace-ipv6-sniff-power.eps
 #	gv powertrace-sniff-power.eps
 
 powertrace-all: powertrace-parse powertrace-plot powertrace-show

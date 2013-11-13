@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+
+%protocol_mapping = ( 
+					  0=>"FORWARDING", 
+					  1=>"ICMP",       
+                      6=>"TCP",        
+                     17=>"UDP",        
+                     58=>"ICMP6");
+
+while(<>) {
+
+    if(/(\d+) SP ([\d\.]+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) \d+ \d+ (\d+) (\d+) (\d+)/) {
+        
+        $clock_time     = $1;
+        $node           = $2;
+        $seq            = $3;
+        $proto          = $4; 
+        $channel        = $5;
+        $num_input      = $6;
+        $input_txtime   = $7;
+        $input_rxtime   = $8;
+        $num_output     = $9;
+        $output_txtime  = $10;
+        $output_rxtime  = $11;
+
+
+        $num_packets_for_proto{$proto} = $num_input + $num_output;
+        $tx_for_proto{$proto} = $input_txtime + $output_txtime;
+        $rx_for_proto{$proto} = $input_rxtime + $output_rxtime;
+    }
+}
+
+#print "# Columns are:\n";
+#print "# activity tx_dutycycle rx_dutycycle num_packets\n";
+
+#calculate the total tx/rx for all protocol
+foreach $p (keys %tx_for_proto) {
+    $total += $tx_for_proto{$p} + $rx_for_proto{$p};
+}
+
+foreach $p (keys %tx_for_proto) {
+    print "$protocol_mapping{$p} " . $tx_for_proto{$p}/$total . " " . $rx_for_proto{$p}/$total . " " . $num_packets_for_proto{$p} . "\n";
+}

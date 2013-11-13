@@ -60,6 +60,18 @@ struct powertrace_sniff_stats {
   uint32_t last_output_txtime, last_output_rxtime;
 };
 
+#define POWERTRACE_MAC_MSG_TYPE 1
+// Each the trace will print the total power for broadcast and unicast message at MAC layer
+#ifdef POWERTRACE_MAC_MSG_TYPE
+enum MAC_MSG_TYPE
+{
+  POWERTRACE_MAC_UNICAST_TYPE    = 0,
+  POWERTRACE_MAC_BROADCAST_TYPE  = 1,
+  POWERTRACE_MAC_MAX_TYPE
+};
+  struct compower_activity mac_msg_stat[POWERTRACE_MAC_MAX_TYPE];
+#endif
+
 #define INPUT  1
 #define OUTPUT 0
 
@@ -116,11 +128,25 @@ powertrace_print(char *str)
   all_radio = energest_type_time(ENERGEST_TYPE_LISTEN) +
     energest_type_time(ENERGEST_TYPE_TRANSMIT);
 
-  printf("%s %lu P %d.%d %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu (radio %d.%02d%% / %d.%02d%% tx %d.%02d%% / %d.%02d%% listen %d.%02d%% / %d.%02d%%)\n",
+  printf("%s %lu P %d.%d %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu "
+#ifdef POWERTRACE_MAC_MSG_TYPE
+         "%lu %lu %lu %lu "
+#endif
+         "(radio %d.%02d%% / %d.%02d%% tx %d.%02d%% / %d.%02d%% listen %d.%02d%% / %d.%02d%%)\n",
          str,
-         clock_time(), rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], seqno,
+         clock_time(),
+#if ! UIP_CONF_IPV6
+         rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1],
+#else
+         rimeaddr_node_addr.u8[7], rimeaddr_node_addr.u8[6],
+#endif
+         seqno,
          all_cpu, all_lpm, all_transmit, all_listen, all_idle_transmit, all_idle_listen,
          cpu, lpm, transmit, listen, idle_transmit, idle_listen,
+#ifdef POWERTRACE_MAC_MSG_TYPE
+         mac_msg_stat[POWERTRACE_MAC_BROADCAST_TYPE].transmit, mac_msg_stat[POWERTRACE_MAC_BROADCAST_TYPE].listen,
+         mac_msg_stat[POWERTRACE_MAC_UNICAST_TYPE].transmit, mac_msg_stat[POWERTRACE_MAC_UNICAST_TYPE].listen,
+#endif
          (int)((100L * (all_transmit + all_listen)) / all_time),
          (int)((10000L * (all_transmit + all_listen) / all_time) - (100L * (all_transmit + all_listen) / all_time) * 100),
          (int)((100L * (transmit + listen)) / time),
@@ -161,7 +187,7 @@ powertrace_print(char *str)
                  radio));
 #else
     printf("%s %lu SP %d.%d %lu %u %u %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu (proto %u(%u) radio %d.%02d%% / %d.%02d%%)\n",
-           str, clock_time(), rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], seqno,
+           str, clock_time(), rimeaddr_node_addr.u8[7], rimeaddr_node_addr.u8[6], seqno,
            s->proto, s->channel,
            s->num_input, s->input_txtime, s->input_rxtime,
            s->input_txtime - s->last_input_txtime,
@@ -238,6 +264,19 @@ add_stats(struct powertrace_sniff_stats *s, int input_or_output)
     s->output_txtime += packetbuf_attr(PACKETBUF_ATTR_TRANSMIT_TIME);
     s->output_rxtime += packetbuf_attr(PACKETBUF_ATTR_LISTEN_TIME);
   }
+
+// Tracing the power for unicast and broadcast message at MAC layer is enable
+#ifdef POWERTRACE_MAC_MSG_TYPE
+  // If the packet is
+  if(rimeaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_RECEIVER), &rimeaddr_null)){
+    mac_msg_stat[POWERTRACE_MAC_BROADCAST_TYPE].transmit += packetbuf_attr(PACKETBUF_ATTR_TRANSMIT_TIME);
+    mac_msg_stat[POWERTRACE_MAC_BROADCAST_TYPE].listen   += packetbuf_attr(PACKETBUF_ATTR_LISTEN_TIME);
+
+  } else {
+    mac_msg_stat[POWERTRACE_MAC_UNICAST_TYPE].transmit += packetbuf_attr(PACKETBUF_ATTR_TRANSMIT_TIME);
+    mac_msg_stat[POWERTRACE_MAC_UNICAST_TYPE].listen   += packetbuf_attr(PACKETBUF_ATTR_LISTEN_TIME);
+  }
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static void
