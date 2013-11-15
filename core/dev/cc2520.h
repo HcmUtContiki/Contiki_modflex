@@ -87,6 +87,19 @@ int cc2520_off(void);
 
 void cc2520_set_cca_threshold(int value);
 
+enum power_mode_e
+{
+  POWER_MODE_ACTIVE,
+  POWER_MODE_LPM1,
+  POWER_MODE_LPM2,
+  POWER_MODE_ERROR
+};
+
+uint8_t current_mode;
+
+uint8_t      cc2520_get_power_mode();
+uint8_t      cc2520_set_power_mode(uint8_t mode);
+
 /************************************************************************/
 /* Additional SPI Macros for the CC2520 */
 /************************************************************************/
@@ -104,8 +117,8 @@ void cc2520_set_cca_threshold(int value);
 #define CC2520_WRITE_REG(adr,data)                                      \
   do {                                                                  \
     CC2520_SPI_ENABLE();                                                \
-    SPI_WRITE_FAST(CC2520_INS_MEMWR | ((adr>>8)&0xFF));                 \
-    SPI_WRITE_FAST(adr & 0xff);                                         \
+    SPI_WRITE_FAST(CC2520_INS_MEMWR | ((adr>>8)&0xF));                  \
+    SPI_WRITE_FAST(adr & 0xFF);                                         \
     SPI_WRITE_FAST((uint8_t) data);                                     \
     SPI_WAITFORTx_ENDED();                                              \
     CC2520_SPI_DISABLE();                                               \
@@ -121,6 +134,27 @@ void cc2520_set_cca_threshold(int value);
     SPI_READ(data);                                                     \
     CC2520_SPI_DISABLE();                                               \
   } while(0)
+
+/*The MEMRD have following format
+ *
+ * MEMRD SI 0 0 0 1 a a a a | a a a a a a a a | - - - - - - - -
+ *       SO s s s s s s s s | s s s s s s s s | d d d d d d d d
+ *a: address
+ *s: status
+ *d: data
+ *-: don't care
+ * */
+#define CC2520_READ_SREG(adr,data)                                       \
+   do {                                                                  \
+     CC2520_SPI_ENABLE();                                                \
+     SPI_WRITE_FAST((CC2520_INS_MEMRD | ((adr>>8)&0xF)));                \
+     SPI_WRITE_FAST((adr & 0xFF));                                       \
+     SPI_WRITE_FAST(0);                                                  \
+     SPI_WAITFORTx_ENDED();                                              \
+     SPI_READ(data);                                                     \
+     CC2520_SPI_DISABLE();                                               \
+   } while(0)
+
 
 #define CC2520_READ_FIFO_BYTE(data)                                     \
   do {                                                                  \
@@ -199,22 +233,5 @@ void cc2520_set_cca_threshold(int value);
 /* The value of SFD will be write into GPIO register
  * Table 8: GPIO reset state cc2520 data sheet*/
 #define GPIOCTRL_SFD  0x2A
-
-#ifdef CONTIKI_TARGET_MODFLEX
-#define GPIOCTRL_SETB 0x7F
-#define GPIOCTRL_CLRB 0x7E
-#define CC2520_SET_CC2591_TXMODE                            \
-  do {                                                      \
-    CC2520_WRITE_REG(CC2520_GPIOCTRL5,GPIOCTRL_SETB);       \
-    CC2520_WRITE_REG(CC2520_GPIOCTRL4,GPIOCTRL_CLRB);       \
-  } while(0)
-
-#define CC2520_SET_CC2591_RXMODE                            \
-  do {                                                      \
-    CC2520_WRITE_REG(CC2520_GPIOCTRL5,GPIOCTRL_CLRB);       \
-    CC2520_WRITE_REG(CC2520_GPIOCTRL4,GPIOCTRL_SETB);       \
-  } while(0)
-
-#endif //FOR MODPLEX PLATFORM
 
 #endif /* __CC2520_H__ */
