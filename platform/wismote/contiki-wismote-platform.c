@@ -32,6 +32,8 @@
  */
 
 #include "dev/button-sensor.h"
+//@TODO: should add the .h file instead of .c file
+#include "contiki-wismote-channel-scanner.c"
 
 SENSORS(&button_sensor);
 
@@ -39,4 +41,8 @@ void
 init_platform(void)
 {
   process_start(&sensors_process, NULL);
+
+#ifdef SENSOR_CHANNEL_SCAN
+  process_start(&channel_scanner, NULL);
+#endif
 }
