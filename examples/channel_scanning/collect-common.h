@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Swedish Institute of Computer Science.
+ * Copyright (c) 2010, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,40 +26,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * This file is part of the Contiki operating system.
- *
- * $Id: hello-world.c,v 1.1 2006/10/02 21:46:46 adamdunkels Exp $
+ * $Id: collect-common.h,v 1.1 2010/11/03 15:36:38 adamdunkels Exp $
  */
 
 /**
  * \file
- *         A very simple Contiki application showing how Contiki programs look
+ *         Common code between collect client and server
  * \author
- *         Adam Dunkels <adam@sics.se>
+ *         Niclas Finne <nfi@sics.se>
  */
 
+#ifndef __COLLECT_COMMON_H__
+#define __COLLECT_COMMON_H__
+
 #include "contiki.h"
-#include <stdio.h> /* For printf() */
-#include "dev/leds.h"
-#include "dev/button-sensor.h"
-#include "net/netstack.h"
+#include "net/rime/rimeaddr.h"
+#ifdef CONTIKI_TARGET_MODFLEX
+#include "leds-arch.h"
+#endif
 
-/*---------------------------------------------------------------------------*/
-PROCESS(hello_world_process, "Hello world process");
-AUTOSTART_PROCESSES(&hello_world_process);
+void collect_common_net_init(void);
+void collect_common_net_print(void);
+void collect_common_set_sink(void);
+void collect_common_send(void);
+void collect_common_recv(const rimeaddr_t *originator, uint8_t seqno,
+                         uint8_t hops,
+                         uint8_t *payload,
+                         uint16_t payload_len);
+void collect_common_set_send_active(int active);
 
-/*---------------------------------------------------------------------------*/
+PROCESS_NAME(collect_common_process);
 
-PROCESS_THREAD(hello_world_process, ev, data)
-{
-  static struct etimer get_rssi;
-  PROCESS_BEGIN();
-  while(1){
-     printf("Hello, world[this device has contiki OS inside]\n");
-     etimer_set(&get_rssi, CLOCK_SECOND/60);
-     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&get_rssi));
-     printf("RSSI: %d\n", cc2520_rssi());
-  }
-  PROCESS_END();
-}
-/*---------------------------------------------------------------------------*/
+#endif /* __COLLECT_COMMON_H__ */

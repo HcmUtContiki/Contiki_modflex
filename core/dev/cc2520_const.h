@@ -72,7 +72,7 @@ enum cc2520_address {
 };
 
 // IEEE 802.15.4 defined constants (2.4 GHz logical channels)
-#define MIN_CHANNEL 			            11    // 2405 MHz
+#define MIN_CHANNEL                         11    // 2405 MHz
 #define MAX_CHANNEL                         26    // 2480 MHz
 #define CHANNEL_SPACING                     5     // MHz
 
