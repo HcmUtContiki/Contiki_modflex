@@ -279,6 +279,7 @@ main(int argc, char **argv)
 #if !(SENSOR_CHANNEL_SCAN || GATEWAY_CHANNEL_SCAN)
   cc2520_set_channel(MIN_CHANNEL);
 #else
+  cc2520_on();
   clock_wait(100); /*Waiting 1 second for stable*/
   init_scanner();
 #endif

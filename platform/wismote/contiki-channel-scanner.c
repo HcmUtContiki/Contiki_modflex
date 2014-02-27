@@ -23,8 +23,8 @@
 #define  RF_NAME_PREFIX(function)          cc2420##function
 #endif
 
-#define JOINING_NETWORK_TIMER               (2 * CLOCK_SECOND) // constant time to check parent
-#define MAX_FAILING_JOIN_NERWORK_TIME       2
+#define JOINING_NETWORK_TIMER               (60 * CLOCK_SECOND) // constant time to check parent
+#define MAX_FAILING_JOIN_NERWORK_TIME        2
 
 PROCESS(channel_scanner, "Channel Scanner");
 
@@ -36,7 +36,7 @@ PROCESS(channel_scanner, "Channel Scanner");
  * -   Output     : The best silent channel
  */
 #if GATEWAY_CHANNEL_SCAN
-#define NBR_SAMPLES          100
+#define NBR_SAMPLES          0xff
 uint8_t gatewayChannelScan()
 {
   // Initialize the base channel and scan
