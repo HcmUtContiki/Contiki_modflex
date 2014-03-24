@@ -11,6 +11,7 @@
 #define CC2420_RF 1
 #endif
 
+#include "contiki.h"
 #include "rpl.h"
 #include "sys/ctimer.h"
 #include "uip-debug.h"
@@ -23,7 +24,8 @@
 #define  RF_NAME_PREFIX(function)          cc2420##function
 #endif
 
-#define JOINING_NETWORK_TIMER               (60 * CLOCK_SECOND) // constant time to check parent
+#define JOINING_NETWORK_TIMER               (6 * CLOCK_SECOND)       // constant time to check parent
+#define SLEEPING_TIMER                      (5 * 60 * CLOCK_SECOND) // Sleeping time is 15 minutes
 #define MAX_FAILING_JOIN_NERWORK_TIME        2
 
 PROCESS(channel_scanner, "Channel Scanner");
@@ -80,9 +82,38 @@ uint8_t gatewayChannelScan()
 #if SENSOR_CHANNEL_SCAN
 
 static struct ctimer join_network_timer;
+static struct ctimer sleeping_timer;
+static uint8_t scanner_running = 0;
+
+/*Define functions*/
+void turn_on_scanning();
+static void handle_sleeping_callback(void *in);
+static void handle_join_network_callback(void *in);
+
+
+void turn_on_scanning()
+{
+  scanner_running  = 1;
+  ctimer_set(&join_network_timer, JOINING_NETWORK_TIMER, handle_join_network_callback, (void*)NULL);
+}
+
+// After sleeping timer expired this call-back function will be call to weakup
+// and start try to join network again
+static void
+handle_sleeping_callback(void *in)
+{
+  // Turn on channel scanning
+  PRINTF("Channel Scan: channel scanning weak-up !!!\n");
+  NETSTACK_RADIO.on();
+  NETSTACK_RDC.on();
+  turn_on_scanning();
+}
+
 static void
 handle_join_network_callback(void *in)
 {
+  if (scanner_running)
+  {
     PRINTF("Channel Scan: In the call-back\n");
     static uint8_t  join_failure_count                = 0;
     static uint16_t network_join_success_check        = 0;
@@ -94,6 +125,7 @@ handle_join_network_callback(void *in)
      *      another channel*/
     if (!default_dag)
     {
+      network_join_success_check = 0;
       uint8_t current_channel = RF_NAME_PREFIX(_get_channel)();
       current_channel++;
       if (current_channel > MAX_CHANNEL)
@@ -103,9 +135,26 @@ handle_join_network_callback(void *in)
       }
       if (join_failure_count >= MAX_FAILING_JOIN_NERWORK_TIME)
       {
-        //@TODO if can not join the network within specific time so go to
-        // deep sleep mode
+        // If can not join the network within specific time so turn of radio chip
+        // and stop channel scanning
+        //NETSTACK_RDC.off(1);           // Turn off RDC and
+        //NETSTACK_RADIO.off();          // Turn off Radio module
         join_failure_count = 0;
+        //scanner_running = 0;
+        //ctimer_set(&sleeping_timer, SLEEPING_TIMER, handle_sleeping_callback, (void*)NULL);
+        PRINTF("Channel Scan: go to sleep for %d seconds\n", ((SLEEPING_TIMER)/CLOCK_SECOND));
+
+        int r;
+        do {
+          /* Reset watchdog. */
+          watchdog_periodic();
+          r = process_run();
+        } while(r > 0);
+
+        // If no more process is running just go to sleep
+
+        //NETSTACK_RADIO.on();
+        //NETSTACK_RADIO.on();
       }
       else
       {
@@ -122,18 +171,20 @@ handle_join_network_callback(void *in)
       PRINTF("Channel Scan: Join network successful \n");
       network_join_success_check++;
       network_join_success_check = (15 == network_join_success_check) ?
-                                   0 : network_join_success_check;
+                                   15 : network_join_success_check;
       uint32_t new_timeout = (2 << network_join_success_check) * JOINING_NETWORK_TIMER;
       ctimer_set(&join_network_timer, new_timeout, handle_join_network_callback, (void*)NULL);
     }
+  }
 }
+
 #endif
 
 PROCESS_THREAD(channel_scanner, ev, data)
 {
   PROCESS_BEGIN();
 #if SENSOR_CHANNEL_SCAN
-  ctimer_set(&join_network_timer, JOINING_NETWORK_TIMER, handle_join_network_callback, (void*)NULL);
+  turn_on_scanning();
 #endif
 #if GATEWAY_CHANNEL_SCAN
   //If defined the node as GATEWAY so it must decide to chose the global channel its network
