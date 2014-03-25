@@ -24,8 +24,8 @@
 #define  RF_NAME_PREFIX(function)          cc2420##function
 #endif
 
-#define JOINING_NETWORK_TIMER               (6 * CLOCK_SECOND)       // constant time to check parent
-#define SLEEPING_TIMER                      (5 * 60 * CLOCK_SECOND) // Sleeping time is 15 minutes
+#define JOINING_NETWORK_TIMER               (6 * CLOCK_SECOND)        // constant time to check parent
+#define SLEEPING_TIMER                      (10 * 60 * CLOCK_SECOND)  // Sleeping time is 15 minutes
 #define MAX_FAILING_JOIN_NERWORK_TIME        2
 
 PROCESS(channel_scanner, "Channel Scanner");
@@ -122,7 +122,8 @@ handle_join_network_callback(void *in)
     /*Check to see this note is joining any dag
      *   1) If yes that mean this node belong to a specific network
      *   2) Reset the timer as well as find a new chance to join a network within
-     *      another channel*/
+     *      another channel
+     */
     if (!default_dag)
     {
       network_join_success_check = 0;
@@ -137,24 +138,12 @@ handle_join_network_callback(void *in)
       {
         // If can not join the network within specific time so turn of radio chip
         // and stop channel scanning
-        //NETSTACK_RDC.off(1);           // Turn off RDC and
-        //NETSTACK_RADIO.off();          // Turn off Radio module
+        NETSTACK_RDC.off(0);           // Turn off RDC and
+        NETSTACK_RADIO.off();          // Turn off Radio module
         join_failure_count = 0;
-        //scanner_running = 0;
-        //ctimer_set(&sleeping_timer, SLEEPING_TIMER, handle_sleeping_callback, (void*)NULL);
+        scanner_running = 0;
+        ctimer_set(&sleeping_timer, SLEEPING_TIMER, handle_sleeping_callback, (void*)NULL);
         PRINTF("Channel Scan: go to sleep for %d seconds\n", ((SLEEPING_TIMER)/CLOCK_SECOND));
-
-        int r;
-        do {
-          /* Reset watchdog. */
-          watchdog_periodic();
-          r = process_run();
-        } while(r > 0);
-
-        // If no more process is running just go to sleep
-
-        //NETSTACK_RADIO.on();
-        //NETSTACK_RADIO.on();
       }
       else
       {
