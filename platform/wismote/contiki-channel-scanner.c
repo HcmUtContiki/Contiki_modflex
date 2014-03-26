@@ -156,12 +156,13 @@ handle_join_network_callback(void *in)
     else
     {
       // If joining network successful let increase the timer by back-off duration
-      // The new timeout should only 2^15 * JOINING_NETWORK_TIMER
+      // The new timeout should only 2^7 * JOINING_NETWORK_TIMER
       PRINTF("Channel Scan: Join network successful \n");
-      network_join_success_check++;
-      network_join_success_check = (15 == network_join_success_check) ?
-                                   15 : network_join_success_check;
-      uint32_t new_timeout = (2 << network_join_success_check) * JOINING_NETWORK_TIMER;
+      if (network_join_success_check < 7)
+      {
+        network_join_success_check++;
+      }
+      uint32_t new_timeout = (1 << network_join_success_check) * JOINING_NETWORK_TIMER;
       ctimer_set(&join_network_timer, new_timeout, handle_join_network_callback, (void*)NULL);
     }
   }

@@ -45,6 +45,9 @@
 #include <stdio.h>
 #include <string.h>
 
+/*Start power trace to collect power usage consumption*/
+#include "powertrace.h"
+
 #define UDP_CLIENT_PORT 8775
 #define UDP_SERVER_PORT 5688
 
@@ -160,7 +163,6 @@ collect_common_send(void)
 
   uip_udp_packet_sendto(client_conn, &msg, sizeof(msg),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
-  printf("packet is sent\n");
 #ifdef CONTIKI_TARGET_MODFLEX
   leds_toggle(LEDS_0);
 #endif
@@ -215,6 +217,9 @@ set_global_address(void)
 PROCESS_THREAD(udp_client_process, ev, data)
 {
   PROCESS_BEGIN();
+
+  /* Start powertracing, once every 60 seconds. */
+  powertrace_start(CLOCK_SECOND * 60);
 
   PROCESS_PAUSE();
 
